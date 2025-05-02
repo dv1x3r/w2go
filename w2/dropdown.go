@@ -37,3 +37,31 @@ type DropdownValue struct {
 	ID   int    `json:"id"`
 	Text string `json:"text"`
 }
+
+type EditableDropdown struct {
+	ID   Editable[int]    `json:"id"`
+	Text Editable[string] `json:"text"`
+}
+
+func (e *EditableDropdown) UnmarshalJSON(data []byte) error {
+	if string(data) == "null" || string(data) == `""` {
+		e.ID.Provided = true
+		e.Text.Provided = true
+		return nil
+	}
+
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	if err := e.ID.UnmarshalJSON(raw["id"]); err != nil {
+		return err
+	}
+
+	if err := e.Text.UnmarshalJSON(raw["text"]); err != nil {
+		return err
+	}
+
+	return nil
+}

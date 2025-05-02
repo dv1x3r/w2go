@@ -102,10 +102,7 @@ type Todo struct {
 	Name        string              `json:"name"`
 	Description w2.Editable[string] `json:"description"`
 	Quantity    w2.Editable[int]    `json:"quantity"`
-	Status      struct {
-		ID   w2.Editable[int]    `json:"id"`
-		Text w2.Editable[string] `json:"text"`
-	} `json:"status"`
+	Status      w2.EditableDropdown `json:"status"`
 }
 
 func getTodoGridRecords(w http.ResponseWriter, r *http.Request) {
