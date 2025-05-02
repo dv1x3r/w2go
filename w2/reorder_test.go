@@ -36,6 +36,7 @@ func TestGridReorderRequest(t *testing.T) {
 
 			if req != test.Expected {
 				t.Errorf("❌ Unexpected struct for input %s:\n  got:  %+v\n  want: %+v", test.InputJSON, req, test.Expected)
+				continue
 			}
 
 			output, err := json.Marshal(req)
