@@ -59,6 +59,7 @@ func TestEditable(t *testing.T) {
 
 			if value != test.Expected {
 				t.Errorf("❌ Unexpected struct for input %s:\n  got:  %+v\n  want: %+v", test.InputJSON, value, test.Expected)
+				continue
 			}
 
 			output, err := json.Marshal(value)
