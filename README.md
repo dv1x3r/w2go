@@ -50,9 +50,9 @@ The following examples use Go's standard `net/http` library: `(w http.ResponseWr
 ```go
 req, err := w2.ParseGridDataRequest(r.URL.Query().Get("request"))
 if err != nil {
-  res := w2.NewErrorResponse(err.Error())
-  res.Write(w, http.StatusBadRequest)
-  return
+	res := w2.NewErrorResponse(err.Error())
+	res.Write(w, http.StatusBadRequest)
+	return
 }
 
 // Process the request...
@@ -67,9 +67,9 @@ res.Write(w)
 ```go
 req, err := w2.ParseGridSaveRequest[Todo](r.Body)
 if err != nil {
-  res := w2.NewErrorResponse(err.Error())
-  res.Write(w, http.StatusBadRequest)
-  return
+	res := w2.NewErrorResponse(err.Error())
+	res.Write(w, http.StatusBadRequest)
+	return
 }
 
 // Apply updates for req.Changes slice...
@@ -118,7 +118,7 @@ res.Write(w, http.StatusOK)
 req, err := w2.ParseFormGetRequest(r.URL.Query().Get("request"))
 if err != nil {
 	res := w2.NewErrorResponse(err.Error())
-  res.Write(w, http.StatusBadRequest)
+	res.Write(w, http.StatusBadRequest)
 	return
 }
 
@@ -135,7 +135,7 @@ res.Write(w)
 req, err := w2.ParseFormSaveRequest[Todo](r.Body)
 if err != nil {
 	res := w2.NewErrorResponse(err.Error())
-  res.Write(w, http.StatusBadRequest)
+	res.Write(w, http.StatusBadRequest)
 	return
 }
 
@@ -153,7 +153,7 @@ res.Write(w)
 req, err := w2.ParseDropdownRequest(r.URL.Query().Get("request"))
 if err != nil {
 	res := w2.NewErrorResponse(err.Error())
-  res.Write(w, http.StatusBadRequest)
+	res.Write(w, http.StatusBadRequest)
 	return
 }
 
