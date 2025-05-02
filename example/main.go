@@ -98,12 +98,14 @@ type Status struct {
 }
 
 type Todo struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
-
-	Description w2.Editable[string]           `json:"description"`
-	Quantity    w2.Editable[int]              `json:"quantity"`
-	Status      w2.Editable[w2.DropdownValue] `json:"status"`
+	ID          int                 `json:"id"`
+	Name        string              `json:"name"`
+	Description w2.Editable[string] `json:"description"`
+	Quantity    w2.Editable[int]    `json:"quantity"`
+	Status      struct {
+		ID   w2.Editable[int]    `json:"id"`
+		Text w2.Editable[string] `json:"text"`
+	} `json:"status"`
 }
 
 func getTodoGridRecords(w http.ResponseWriter, r *http.Request) {
@@ -162,8 +164,8 @@ func getTodoGridRecords(w http.ResponseWriter, r *http.Request) {
 			&todo.Name,
 			&todo.Description,
 			&todo.Quantity,
-			&todo.Status,
-			&todo.Status.V.Text,
+			&todo.Status.ID,
+			&todo.Status.Text,
 		); err != nil {
 			w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
 			return
@@ -199,7 +201,7 @@ func postTodoGridSave(w http.ResponseWriter, r *http.Request) {
 
 		w2sqlbuilder.SetEditableWithDefault(ub, "description", change.Description)
 		w2sqlbuilder.SetEditable(ub, "quantity", change.Quantity)
-		w2sqlbuilder.SetEditable(ub, "status_id", change.Status)
+		w2sqlbuilder.SetEditable(ub, "status_id", change.Status.ID)
 
 		query, args := ub.BuildWithFlavor(sqlbuilder.SQLite)
 		if _, err := tx.Exec(query, args...); err != nil {
@@ -263,8 +265,8 @@ func getTodoForm(w http.ResponseWriter, r *http.Request) {
 		&todo.Name,
 		&todo.Description,
 		&todo.Quantity,
-		&todo.Status,
-		&todo.Status.V.Text,
+		&todo.Status.ID,
+		&todo.Status.Text,
 	); err != nil {
 		if err == sql.ErrNoRows {
 			w2.NewErrorResponse("todo not found").Write(w, http.StatusNotFound)
@@ -287,7 +289,7 @@ func postTodoForm(w http.ResponseWriter, r *http.Request) {
 
 	if req.RecID == 0 {
 		const query = "insert into todo (name, description, quantity, status_id) values (?, ?, ?, ?);"
-		res, err := db.Exec(query, req.Record.Name, req.Record.Description, req.Record.Quantity, req.Record.Status)
+		res, err := db.Exec(query, req.Record.Name, req.Record.Description, req.Record.Quantity, req.Record.Status.ID)
 		if err != nil {
 			w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
 			return
@@ -300,7 +302,7 @@ func postTodoForm(w http.ResponseWriter, r *http.Request) {
 		req.RecID = int(lastInsertId)
 	} else {
 		const query = "update todo set name = ?, description = ?, quantity = ?, status_id = ? where id = ?;"
-		_, err := db.Exec(query, req.Record.Name, req.Record.Description, req.Record.Quantity, req.Record.Status, req.RecID)
+		_, err := db.Exec(query, req.Record.Name, req.Record.Description, req.Record.Quantity, req.Record.Status.ID, req.RecID)
 		if err != nil {
 			w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
 			return

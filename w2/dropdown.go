@@ -1,9 +1,7 @@
 package w2
 
 import (
-	"database/sql/driver"
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
@@ -38,24 +36,4 @@ func (res DropdownResponse[T]) Write(w http.ResponseWriter) {
 type DropdownValue struct {
 	ID   int    `json:"id"`
 	Text string `json:"text"`
-}
-
-// Scan implements the sql.Scanner interface.
-func (v *DropdownValue) Scan(src any) error {
-	if src == nil {
-		v.ID = 0
-		return nil
-	}
-
-	if value, ok := src.(int64); ok {
-		v.ID = int(value)
-		return nil
-	}
-
-	return fmt.Errorf("unsupported Scan, storing driver.Value type %T into type int64", src)
-}
-
-// Value implements the driver.Valuer interface.
-func (v DropdownValue) Value() (driver.Value, error) {
-	return int64(v.ID), nil
 }
