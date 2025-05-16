@@ -16,12 +16,12 @@ func TestGridReorderRequest(t *testing.T) {
 		}{
 			{
 				InputJSON:    `{"recid": 1, "moveBefore": 42}`,
-				Expected:     w2.GridReorderRequest{RecID: 1, MoveBefore: 42, Last: false},
+				Expected:     w2.GridReorderRequest{RecID: 1, MoveBefore: 42, Bottom: false},
 				ExpectedJSON: `{"recid":1,"moveBefore":42}`,
 			},
 			{
 				InputJSON:    `{"recid": 2, "moveBefore": "bottom"}`,
-				Expected:     w2.GridReorderRequest{RecID: 2, Last: true},
+				Expected:     w2.GridReorderRequest{RecID: 2, Bottom: true},
 				ExpectedJSON: `{"recid":2,"moveBefore":"bottom"}`,
 			},
 		}

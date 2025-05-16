@@ -28,7 +28,7 @@ func TestReorderArray(t *testing.T) {
 			},
 			{
 				Input:    []int{1, 2, 3, 4, 5},
-				Request:  w2.GridReorderRequest{RecID: 3, Last: true},
+				Request:  w2.GridReorderRequest{RecID: 3, Bottom: true},
 				Expected: []int{1, 2, 4, 5, 3},
 			},
 			{
