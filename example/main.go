@@ -196,9 +196,9 @@ func postTodoGridSave(w http.ResponseWriter, r *http.Request) {
 		ub := sqlbuilder.Update("todo")
 		ub.Where(ub.EQ("id", change.ID))
 
-		w2sqlbuilder.SetEditableWithDefault(ub, "description", change.Description)
-		w2sqlbuilder.SetEditable(ub, "quantity", change.Quantity)
-		w2sqlbuilder.SetEditable(ub, "status_id", change.Status.ID)
+		w2sqlbuilder.SetEditableWithDefault(ub, change.Description, "description")
+		w2sqlbuilder.SetEditable(ub, change.Quantity, "quantity")
+		w2sqlbuilder.SetEditable(ub, change.Status.ID, "status_id")
 
 		query, args := ub.BuildWithFlavor(sqlbuilder.SQLite)
 		if _, err := tx.Exec(query, args...); err != nil {

@@ -96,7 +96,7 @@ func OrderBy(sb *sqlbuilder.SelectBuilder, r w2.GridDataRequest, mapping map[str
 
 // SetEditable updates the field only if a value is provided.
 // If the value is marked as valid, it sets the field to the provided value. Otherwise, it sets field to NULL.
-func SetEditable[T any](ub *sqlbuilder.UpdateBuilder, field string, value w2.Editable[T]) {
+func SetEditable[T any](ub *sqlbuilder.UpdateBuilder, value w2.Editable[T], field string) {
 	if value.Provided {
 		if value.Valid {
 			ub.SetMore(ub.EQ(field, value.V))
@@ -108,7 +108,7 @@ func SetEditable[T any](ub *sqlbuilder.UpdateBuilder, field string, value w2.Edi
 
 // SetEditableWithDefault updates the field only if a value is provided.
 // It always sets the field to the given value, which is useful for applying defaults.
-func SetEditableWithDefault[T any](ub *sqlbuilder.UpdateBuilder, field string, value w2.Editable[T]) {
+func SetEditableWithDefault[T any](ub *sqlbuilder.UpdateBuilder, value w2.Editable[T], field string) {
 	if value.Provided {
 		ub.SetMore(ub.EQ(field, value.V))
 	}
