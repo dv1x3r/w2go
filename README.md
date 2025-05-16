@@ -250,8 +250,8 @@ for _, change := range req.Changes {
 	ub := sqlbuilder.Update("todo")
 	ub.Where(ub.EQ("id", change.ID))
 
-	w2sqlbuilder.SetEditable(ub, "description", change.Description)
-	w2sqlbuilder.SetEditable(ub, "quantity", change.Quantity)
+	w2sqlbuilder.SetEditable(ub, change.Description, "description")
+	w2sqlbuilder.SetEditable(ub, change.Quantity, "quantity")
 
 	// ...
 }
