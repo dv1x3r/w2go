@@ -427,7 +427,7 @@ func postStatusGridReorder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := w2sort.ReorderArray(ids, req.RecID, req.MoveBefore, req.Last); err != nil {
+	if err := w2sort.ReorderArray(ids, req); err != nil {
 		w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
 		return
 	}

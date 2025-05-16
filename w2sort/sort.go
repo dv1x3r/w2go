@@ -1,8 +1,12 @@
 package w2sort
 
-import "fmt"
+import (
+	"fmt"
 
-func ReorderArray(a []int, id int, moveBefore int, last bool) error {
+	"github.com/dv1x3r/w2go/w2"
+)
+
+func ReorderArray(a []int, r w2.GridReorderRequest) error {
 	n := len(a)
 
 	if n == 0 {
@@ -12,26 +16,26 @@ func ReorderArray(a []int, id int, moveBefore int, last bool) error {
 	// find indexes
 	iValue, iBefore := -1, -1
 	for i, v := range a {
-		if v == id {
+		if v == r.RecID {
 			iValue = i
 		}
-		if !last && v == moveBefore {
+		if !r.Bottom && v == r.MoveBefore {
 			iBefore = i
 		}
 	}
 
 	if iValue < 0 {
-		return fmt.Errorf("id %d not found in slice", id)
+		return fmt.Errorf("id %d not found in slice", r.RecID)
 	}
 
-	if last {
+	if r.Bottom {
 		iBefore = n
 	} else if iBefore < 0 {
-		return fmt.Errorf("moveBefore %d not found in slice", moveBefore)
+		return fmt.Errorf("moveBefore %d not found in slice", r.MoveBefore)
 	}
 
 	// already in right spot
-	if last {
+	if r.Bottom {
 		if iValue == n-1 {
 			return nil
 		}

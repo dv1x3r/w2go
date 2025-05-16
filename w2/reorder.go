@@ -8,7 +8,7 @@ import (
 type GridReorderRequest struct {
 	RecID      int
 	MoveBefore int
-	Last       bool
+	Bottom     bool
 }
 
 func ParseGridReorderRequest(body io.Reader) (GridReorderRequest, error) {
@@ -24,7 +24,7 @@ func (req GridReorderRequest) MarshalJSON() ([]byte, error) {
 
 	v.RecID = req.RecID
 
-	if req.Last {
+	if req.Bottom {
 		v.MoveBefore = "bottom"
 	} else {
 		v.MoveBefore = req.MoveBefore
@@ -48,7 +48,7 @@ func (req *GridReorderRequest) UnmarshalJSON(data []byte) error {
 	}
 
 	if string(raw["moveBefore"]) == `"bottom"` {
-		req.Last = true
+		req.Bottom = true
 	} else {
 		if err := json.Unmarshal(raw["moveBefore"], &req.MoveBefore); err != nil {
 			return err
