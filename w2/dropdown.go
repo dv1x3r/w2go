@@ -55,11 +55,11 @@ func (e *EditableDropdown) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if err := e.ID.UnmarshalJSON(raw["id"]); err != nil {
+	if err := json.Unmarshal(raw["id"], &e.ID); err != nil {
 		return err
 	}
 
-	if err := e.Text.UnmarshalJSON(raw["text"]); err != nil {
+	if err := json.Unmarshal(raw["text"], &e.Text); err != nil {
 		return err
 	}
 
