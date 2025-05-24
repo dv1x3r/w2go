@@ -26,11 +26,16 @@ func NewErrorResponse(message string) BaseResponse {
 	return BaseResponse{Status: StatusError, Message: message}
 }
 
-func (res BaseResponse) Write(w http.ResponseWriter, statusCode int) {
-	data, _ := json.Marshal(res)
+func (res BaseResponse) Write(w http.ResponseWriter, statusCode int) error {
+	data, err := json.Marshal(res)
+	if err != nil {
+		return err
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	w.Write(data)
+	_, err = w.Write(data)
+	return err
 }
 
 type GridDataRequest struct {
@@ -82,10 +87,15 @@ func NewGridDataResponseWithSummary[T any, V any](records []T, summary []V, tota
 	}
 }
 
-func (res GridDataResponse[T, V]) Write(w http.ResponseWriter) {
-	data, _ := json.Marshal(res)
+func (res GridDataResponse[T, V]) Write(w http.ResponseWriter) error {
+	data, err := json.Marshal(res)
+	if err != nil {
+		return err
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(data)
+	_, err = w.Write(data)
+	return err
 }
 
 type GridSaveRequest[T any] struct {
@@ -129,10 +139,15 @@ func NewFormGetResponse[T any](record T) FormGetResponse[T] {
 	}
 }
 
-func (res FormGetResponse[T]) Write(w http.ResponseWriter) {
-	data, _ := json.Marshal(res)
+func (res FormGetResponse[T]) Write(w http.ResponseWriter) error {
+	data, err := json.Marshal(res)
+	if err != nil {
+		return err
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(data)
+	_, err = w.Write(data)
+	return err
 }
 
 type FormSaveRequest[T any] struct {
@@ -159,9 +174,13 @@ func NewFormSaveResponse(recID int) FormSaveResponse {
 	}
 }
 
-func (res FormSaveResponse) Write(w http.ResponseWriter) {
-	data, _ := json.Marshal(res)
+func (res FormSaveResponse) Write(w http.ResponseWriter) error {
+	data, err := json.Marshal(res)
+	if err != nil {
+		return err
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(data)
+	_, err = w.Write(data)
+	return err
 }

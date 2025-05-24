@@ -27,10 +27,15 @@ func NewDropdownResponse[T any](records []T) DropdownResponse[T] {
 	}
 }
 
-func (res DropdownResponse[T]) Write(w http.ResponseWriter) {
-	data, _ := json.Marshal(res)
+func (res DropdownResponse[T]) Write(w http.ResponseWriter) error {
+	data, err := json.Marshal(res)
+	if err != nil {
+		return err
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(data)
+	_, err = w.Write(data)
+	return err
 }
 
 type DropdownValue struct {
