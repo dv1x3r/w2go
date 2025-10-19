@@ -55,6 +55,15 @@ func (e *EditableDropdown) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
+	// parse integer with ID
+	// - w2form saveCleanRecord is true (default)
+	if err := json.Unmarshal(data, &e.ID); err == nil {
+		return nil
+	}
+
+	// parse object with ID and Text
+	// - w2form saveCleanRecord is false
+	// - w2grid editable dropdown list
 	var raw map[string]json.RawMessage
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err

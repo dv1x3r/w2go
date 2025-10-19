@@ -271,6 +271,12 @@ go run example/main.go
 
 Starts the server on `http://localhost:3000`
 
+## Changelog
+
+- v0.2.7 2025-10-19 - EditableDropdown support for clean w2form records
+- v0.2.6 2025-05-24 - Write methods now return errors
+- v0.2.5 2025-05-16 - First stable release
+
 ## License
 
 Licensed under the MIT license.

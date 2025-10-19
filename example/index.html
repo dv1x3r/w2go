@@ -122,7 +122,6 @@
         name: `todoForm`,
         url: '/api/v1/todo/form',
         recid: event.detail.recid,
-        saveCleanRecord: false,
         fields: [
           {field: 'id', type: 'text', hidden: event.type == 'add', html: {label: 'ID', attr: 'size="10" readonly', span: 4}},
           {field: 'name', type: 'text', required: true, html: {label: 'Name', attr: 'style="width: 100%; ; min-width:100px;', span: 4}},
