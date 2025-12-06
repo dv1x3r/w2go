@@ -11,6 +11,7 @@ This package offers Go bindings for the [w2ui JavaScript UI Library](https://git
   - [SQL Builder](#sql-builder)
   - [Utils](#utils)
 - [Example](#example)
+- [Changelog](#changelog)
 - [License](#license)
 
 ## Features
@@ -273,6 +274,7 @@ Starts the server on `http://localhost:3000`
 
 ## Changelog
 
+- v0.2.8 2025-12-06 - Update go-sqlbuilder to v1.38
 - v0.2.7 2025-10-19 - EditableDropdown support for clean w2form records
 - v0.2.6 2025-05-24 - Write methods now return errors
 - v0.2.5 2025-05-16 - First stable release

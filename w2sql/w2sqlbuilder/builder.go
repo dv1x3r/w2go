@@ -86,9 +86,9 @@ func OrderBy(sb *sqlbuilder.SelectBuilder, r w2.GridDataRequest, mapping map[str
 	for _, s := range r.Sort {
 		if field, ok := mapping[s.Field]; ok {
 			if s.Direction == "desc" {
-				sb.OrderBy(fmt.Sprintf("%s DESC", field))
+				sb.OrderByDesc(field)
 			} else {
-				sb.OrderBy(fmt.Sprintf("%s ASC", field))
+				sb.OrderByAsc(field)
 			}
 		}
 	}
