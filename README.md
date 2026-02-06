@@ -105,7 +105,7 @@ if err != nil {
 	return
 }
 
-// Apply updates based on req.RecID, req.MoveBefore and req.Last...
+// Apply updates based on req.RecID, req.MoveBefore and req.Bottom...
 
 res := w2.NewSuccessResponse()
 res.Write(w, http.StatusOK)
@@ -140,7 +140,7 @@ if err != nil {
 	return
 }
 
-// Insert or update based on req.RecId...
+// Insert or update based on req.RecID...
 
 res := w2.NewFormSaveResponse(req.RecID)
 res.Write(w)
@@ -260,7 +260,24 @@ for _, change := range req.Changes {
 
 ### Utils
 
-- `w2sort.ReorderArray`: reorders a slice of integers based on `w2grid` drag and drop.
+**ReorderArray**
+
+Use `w2sort.ReorderArray` to reorder a slice of integers based on `w2grid` drag and drop:
+
+```go
+req, _ := w2.ParseGridReorderRequest(r.Body)
+
+// ids represents the current order (e.g., from database)
+ids := []int{1, 2, 3, 4, 5}
+
+// Reorder the slice based on the drag and drop request
+if err := w2sort.ReorderArray(ids, req); err != nil {
+	// handle error (e.g., id not found in slice)
+}
+
+// ids now contains the new order
+// Persist the new order to the database...
+```
 
 ## Example
 

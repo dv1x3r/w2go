@@ -22,7 +22,20 @@ var staticFS embed.FS
 
 var db *sql.DB
 
-func init() {
+type Todo struct {
+	ID          int                 `json:"id"`
+	Name        string              `json:"name"`
+	Description w2.Editable[string] `json:"description"`
+	Quantity    w2.Editable[int]    `json:"quantity"`
+	Status      w2.EditableDropdown `json:"status"`
+}
+
+type Status struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
+func main() {
 	var err error
 	if db, err = sql.Open("sqlite", ":memory:"); err != nil {
 		log.Fatalln(err)
@@ -62,9 +75,7 @@ func init() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-}
 
-func main() {
 	router := http.NewServeMux()
 
 	router.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
@@ -92,23 +103,11 @@ func main() {
 	}
 }
 
-type Status struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
-}
-
-type Todo struct {
-	ID          int                 `json:"id"`
-	Name        string              `json:"name"`
-	Description w2.Editable[string] `json:"description"`
-	Quantity    w2.Editable[int]    `json:"quantity"`
-	Status      w2.EditableDropdown `json:"status"`
-}
-
 func getTodoGridRecords(w http.ResponseWriter, r *http.Request) {
 	req, err := w2.ParseGridDataRequest(r.URL.Query().Get("request"))
 	if err != nil {
-		w2.NewErrorResponse(err.Error()).Write(w, http.StatusBadRequest)
+		res := w2.NewErrorResponse(err.Error())
+		res.Write(w, http.StatusBadRequest)
 		return
 	}
 
@@ -128,12 +127,20 @@ func getTodoGridRecords(w http.ResponseWriter, r *http.Request) {
 	query, args := sb.BuildWithFlavor(sqlbuilder.SQLite)
 	row := db.QueryRow(query, args...)
 	if err := row.Scan(&total); err != nil && err != sql.ErrNoRows {
-		w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
+		res := w2.NewErrorResponse(err.Error())
+		res.Write(w, http.StatusInternalServerError)
 		return
 	}
 
 	// reuse the same query builder for data records
-	sb.Select("t.id", "t.name", "t.description", "t.quantity", "t.status_id", "s.name as status_name")
+	sb.Select(
+		"t.id",
+		"t.name",
+		"t.description",
+		"t.quantity",
+		"t.status_id",
+		"s.name as status_name",
+	)
 	sb.JoinWithOption(sqlbuilder.LeftJoin, "status as s", "s.id = t.status_id")
 	w2sqlbuilder.OrderBy(sb, req, map[string]string{
 		"id":          "t.id",
@@ -149,45 +156,52 @@ func getTodoGridRecords(w http.ResponseWriter, r *http.Request) {
 	query, args = sb.BuildWithFlavor(sqlbuilder.SQLite)
 	rows, err := db.Query(query, args...)
 	if err != nil {
-		w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
+		res := w2.NewErrorResponse(err.Error())
+		res.Write(w, http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		var todo Todo
-		if err := rows.Scan(
-			&todo.ID,
-			&todo.Name,
-			&todo.Description,
-			&todo.Quantity,
-			&todo.Status.ID,
-			&todo.Status.Text,
-		); err != nil {
-			w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
+		var record Todo
+		err = rows.Scan(
+			&record.ID,
+			&record.Name,
+			&record.Description,
+			&record.Quantity,
+			&record.Status.ID,
+			&record.Status.Text,
+		)
+		if err != nil {
+			res := w2.NewErrorResponse(err.Error())
+			res.Write(w, http.StatusInternalServerError)
 			return
 		}
-		records = append(records, todo)
+		records = append(records, record)
 	}
 
 	if err := rows.Err(); err != nil {
-		w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
+		res := w2.NewErrorResponse(err.Error())
+		res.Write(w, http.StatusInternalServerError)
 		return
 	}
 
-	w2.NewGridDataResponse(records, total).Write(w)
+	res := w2.NewGridDataResponse(records, total)
+	res.Write(w)
 }
 
 func postTodoGridSave(w http.ResponseWriter, r *http.Request) {
 	req, err := w2.ParseGridSaveRequest[Todo](r.Body)
 	if err != nil {
-		w2.NewErrorResponse(err.Error()).Write(w, http.StatusBadRequest)
+		res := w2.NewErrorResponse(err.Error())
+		res.Write(w, http.StatusBadRequest)
 		return
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
+		res := w2.NewErrorResponse(err.Error())
+		res.Write(w, http.StatusInternalServerError)
 		return
 	}
 	defer tx.Rollback()
@@ -202,23 +216,27 @@ func postTodoGridSave(w http.ResponseWriter, r *http.Request) {
 
 		query, args := ub.BuildWithFlavor(sqlbuilder.SQLite)
 		if _, err := tx.Exec(query, args...); err != nil {
-			w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
+			res := w2.NewErrorResponse(err.Error())
+			res.Write(w, http.StatusInternalServerError)
 			return
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
-		w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
+		res := w2.NewErrorResponse(err.Error())
+		res.Write(w, http.StatusInternalServerError)
 		return
 	}
 
-	w2.NewSuccessResponse().Write(w, http.StatusOK)
+	res := w2.NewSuccessResponse()
+	res.Write(w, http.StatusOK)
 }
 
 func postTodoGridRemove(w http.ResponseWriter, r *http.Request) {
 	req, err := w2.ParseGridRemoveRequest(r.Body)
 	if err != nil {
-		w2.NewErrorResponse(err.Error()).Write(w, http.StatusBadRequest)
+		res := w2.NewErrorResponse(err.Error())
+		res.Write(w, http.StatusBadRequest)
 		return
 	}
 
@@ -227,60 +245,65 @@ func postTodoGridRemove(w http.ResponseWriter, r *http.Request) {
 
 	query, args := dlb.BuildWithFlavor(sqlbuilder.SQLite)
 	if _, err := db.Exec(query, args...); err != nil {
-		w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
+		res := w2.NewErrorResponse(err.Error())
+		res.Write(w, http.StatusInternalServerError)
 		return
 	}
 
-	w2.NewSuccessResponse().Write(w, http.StatusOK)
+	res := w2.NewSuccessResponse()
+	res.Write(w, http.StatusOK)
 }
 
 func getTodoForm(w http.ResponseWriter, r *http.Request) {
 	req, err := w2.ParseFormGetRequest(r.URL.Query().Get("request"))
 	if err != nil {
-		w2.NewErrorResponse(err.Error()).Write(w, http.StatusBadRequest)
+		res := w2.NewErrorResponse(err.Error())
+		res.Write(w, http.StatusBadRequest)
 		return
 	}
 
-	var todo Todo
+	var record Todo
 
-	const query = `
-		select
-			t.id,
-			t.name,
-			t.description,
-			t.quantity,
-			t.status_id,
-			s.name as status_name
-		from todo as t
-		left join status as s on s.id = t.status_id
-		where t.id = ?;
-	`
+	sb := sqlbuilder.Select(
+		"t.id",
+		"t.name",
+		"t.description",
+		"t.quantity",
+		"t.status_id",
+		"s.name as status_name",
+	).From("todo as t")
+	sb.JoinWithOption(sqlbuilder.LeftJoin, "status as s", "s.id = t.status_id")
+	sb.Where(sb.EQ("t.id", req.RecID))
 
-	row := db.QueryRow(query, req.RecID)
-	if err := row.Scan(
-		&todo.ID,
-		&todo.Name,
-		&todo.Description,
-		&todo.Quantity,
-		&todo.Status.ID,
-		&todo.Status.Text,
-	); err != nil {
-		if err == sql.ErrNoRows {
-			w2.NewErrorResponse("todo not found").Write(w, http.StatusNotFound)
-			return
-		} else {
-			w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
-			return
-		}
+	query, args := sb.BuildWithFlavor(sqlbuilder.SQLite)
+	row := db.QueryRow(query, args...)
+	err = row.Scan(
+		&record.ID,
+		&record.Name,
+		&record.Description,
+		&record.Quantity,
+		&record.Status.ID,
+		&record.Status.Text,
+	)
+	if err == sql.ErrNoRows {
+		res := w2.NewErrorResponse("todo not found")
+		res.Write(w, http.StatusNotFound)
+		return
+	} else if err != nil {
+		res := w2.NewErrorResponse(err.Error())
+		res.Write(w, http.StatusInternalServerError)
+		return
 	}
 
-	w2.NewFormGetResponse(todo).Write(w)
+	res := w2.NewFormGetResponse(record)
+	res.Write(w)
 }
 
 func postTodoForm(w http.ResponseWriter, r *http.Request) {
 	req, err := w2.ParseFormSaveRequest[Todo](r.Body)
 	if err != nil {
-		w2.NewErrorResponse(err.Error()).Write(w, http.StatusBadRequest)
+		res := w2.NewErrorResponse(err.Error())
+		res.Write(w, http.StatusBadRequest)
 		return
 	}
 
@@ -288,12 +311,14 @@ func postTodoForm(w http.ResponseWriter, r *http.Request) {
 		const query = "insert into todo (name, description, quantity, status_id) values (?, ?, ?, ?);"
 		res, err := db.Exec(query, req.Record.Name, req.Record.Description, req.Record.Quantity, req.Record.Status.ID)
 		if err != nil {
-			w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
+			res := w2.NewErrorResponse(err.Error())
+			res.Write(w, http.StatusInternalServerError)
 			return
 		}
 		lastInsertId, err := res.LastInsertId()
 		if err != nil {
-			w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
+			res := w2.NewErrorResponse(err.Error())
+			res.Write(w, http.StatusInternalServerError)
 			return
 		}
 		req.RecID = int(lastInsertId)
@@ -301,18 +326,21 @@ func postTodoForm(w http.ResponseWriter, r *http.Request) {
 		const query = "update todo set name = ?, description = ?, quantity = ?, status_id = ? where id = ?;"
 		_, err := db.Exec(query, req.Record.Name, req.Record.Description, req.Record.Quantity, req.Record.Status.ID, req.RecID)
 		if err != nil {
-			w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
+			res := w2.NewErrorResponse(err.Error())
+			res.Write(w, http.StatusInternalServerError)
 			return
 		}
 	}
 
-	w2.NewFormSaveResponse(req.RecID).Write(w)
+	res := w2.NewFormSaveResponse(req.RecID)
+	res.Write(w)
 }
 
 func getStatusDropdown(w http.ResponseWriter, r *http.Request) {
 	req, err := w2.ParseDropdownRequest(r.URL.Query().Get("request"))
 	if err != nil {
-		w2.NewErrorResponse(err.Error()).Write(w, http.StatusBadRequest)
+		res := w2.NewErrorResponse(err.Error())
+		res.Write(w, http.StatusBadRequest)
 		return
 	}
 
@@ -321,32 +349,37 @@ func getStatusDropdown(w http.ResponseWriter, r *http.Request) {
 	const query = "select id, name from status where name like ? order by position limit ?;"
 	rows, err := db.Query(query, fmt.Sprintf("%%%s%%", req.Search), req.Max)
 	if err != nil {
-		w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
+		res := w2.NewErrorResponse(err.Error())
+		res.Write(w, http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		var value w2.DropdownValue
-		if err := rows.Scan(&value.ID, &value.Text); err != nil {
-			w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
+		var record w2.DropdownValue
+		if err := rows.Scan(&record.ID, &record.Text); err != nil {
+			res := w2.NewErrorResponse(err.Error())
+			res.Write(w, http.StatusInternalServerError)
 			return
 		}
-		records = append(records, value)
+		records = append(records, record)
 	}
 
 	if err := rows.Err(); err != nil {
-		w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
+		res := w2.NewErrorResponse(err.Error())
+		res.Write(w, http.StatusInternalServerError)
 		return
 	}
 
-	w2.NewDropdownResponse(records).Write(w)
+	res := w2.NewDropdownResponse(records)
+	res.Write(w)
 }
 
 func getStatusGridRecords(w http.ResponseWriter, r *http.Request) {
 	req, err := w2.ParseGridDataRequest(r.URL.Query().Get("request"))
 	if err != nil {
-		w2.NewErrorResponse(err.Error()).Write(w, http.StatusBadRequest)
+		res := w2.NewErrorResponse(err.Error())
+		res.Write(w, http.StatusBadRequest)
 		return
 	}
 
@@ -357,49 +390,58 @@ func getStatusGridRecords(w http.ResponseWriter, r *http.Request) {
 	query, args := sb.BuildWithFlavor(sqlbuilder.SQLite)
 	row := db.QueryRow(query, args...)
 	if err := row.Scan(&total); err != nil && err != sql.ErrNoRows {
-		w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
+		res := w2.NewErrorResponse(err.Error())
+		res.Write(w, http.StatusInternalServerError)
 		return
 	}
 
-	sb.Select("id", "name").OrderBy("position")
+	sb.Select("id", "name")
+	sb.OrderByAsc("position")
+
 	w2sqlbuilder.Limit(sb, req)
 	w2sqlbuilder.Offset(sb, req)
 
 	query, args = sb.BuildWithFlavor(sqlbuilder.SQLite)
 	rows, err := db.Query(query, args...)
 	if err != nil {
-		w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
+		res := w2.NewErrorResponse(err.Error())
+		res.Write(w, http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		var status Status
-		if err := rows.Scan(&status.ID, &status.Name); err != nil {
-			w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
+		var record Status
+		if err := rows.Scan(&record.ID, &record.Name); err != nil {
+			res := w2.NewErrorResponse(err.Error())
+			res.Write(w, http.StatusInternalServerError)
 			return
 		}
-		records = append(records, status)
+		records = append(records, record)
 	}
 
 	if err := rows.Err(); err != nil {
-		w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
+		res := w2.NewErrorResponse(err.Error())
+		res.Write(w, http.StatusInternalServerError)
 		return
 	}
 
-	w2.NewGridDataResponse(records, total).Write(w)
+	res := w2.NewGridDataResponse(records, total)
+	res.Write(w)
 }
 
 func postStatusGridReorder(w http.ResponseWriter, r *http.Request) {
 	req, err := w2.ParseGridReorderRequest(r.Body)
 	if err != nil {
-		w2.NewErrorResponse(err.Error()).Write(w, http.StatusBadRequest)
+		res := w2.NewErrorResponse(err.Error())
+		res.Write(w, http.StatusBadRequest)
 		return
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
+		res := w2.NewErrorResponse(err.Error())
+		res.Write(w, http.StatusInternalServerError)
 		return
 	}
 	defer tx.Rollback()
@@ -408,7 +450,8 @@ func postStatusGridReorder(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := tx.Query("select id from status order by position;")
 	if err != nil {
-		w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
+		res := w2.NewErrorResponse(err.Error())
+		res.Write(w, http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -416,33 +459,39 @@ func postStatusGridReorder(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var id int
 		if err := rows.Scan(&id); err != nil {
-			w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
+			res := w2.NewErrorResponse(err.Error())
+			res.Write(w, http.StatusInternalServerError)
 			return
 		}
 		ids = append(ids, id)
 	}
 
 	if err := rows.Err(); err != nil {
-		w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
+		res := w2.NewErrorResponse(err.Error())
+		res.Write(w, http.StatusInternalServerError)
 		return
 	}
 
 	if err := w2sort.ReorderArray(ids, req); err != nil {
-		w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
+		res := w2.NewErrorResponse(err.Error())
+		res.Write(w, http.StatusInternalServerError)
 		return
 	}
 
 	for i, id := range ids {
 		if _, err := tx.Exec("update status set position = ? where id = ?;", i, id); err != nil {
-			w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
+			res := w2.NewErrorResponse(err.Error())
+			res.Write(w, http.StatusInternalServerError)
 			return
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
-		w2.NewErrorResponse(err.Error()).Write(w, http.StatusInternalServerError)
+		res := w2.NewErrorResponse(err.Error())
+		res.Write(w, http.StatusInternalServerError)
 		return
 	}
 
-	w2.NewSuccessResponse().Write(w, http.StatusOK)
+	res := w2.NewSuccessResponse()
+	res.Write(w, http.StatusOK)
 }
