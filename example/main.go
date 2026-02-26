@@ -10,6 +10,7 @@ import (
 	"github.com/dv1x3r/w2go/w2"
 	"github.com/dv1x3r/w2go/w2sort"
 	"github.com/dv1x3r/w2go/w2sql/w2sqlbuilder"
+	"github.com/dv1x3r/w2go/w2ui"
 
 	"github.com/huandu/go-sqlbuilder"
 	_ "modernc.org/sqlite"
@@ -17,8 +18,8 @@ import (
 
 const address = "localhost:3000"
 
-//go:embed index.html lib
-var staticFS embed.FS
+//go:embed index.html
+var htmlFS embed.FS
 
 var db *sql.DB
 
@@ -77,7 +78,9 @@ func main() {
 	}
 
 	router := http.NewServeMux()
-	router.Handle("/", http.FileServerFS(staticFS))
+
+	router.Handle("GET /{$}", http.FileServerFS(htmlFS))
+	router.Handle("/lib/", http.StripPrefix("/lib/", w2ui.FileServerFS()))
 
 	v1 := http.NewServeMux()
 
