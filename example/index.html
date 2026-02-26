@@ -5,7 +5,7 @@
   <title>w2go example</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/vitmalina/w2ui@master/dist/w2ui.min.css">
+  <link rel="stylesheet" type="text/css" href="/lib/w2ui.min.css">
   <style>
     * {
       margin: 0;
@@ -17,12 +17,12 @@
 <body>
   <div id="main" style="width: 100vw; height: 100vh; min-width: 800px">Loading...</div>
   <script type="module">
-    import {w2ui, w2form, w2grid, w2popup, w2utils} from 'https://cdn.jsdelivr.net/gh/vitmalina/w2ui@master/dist/w2ui.es6.min.js'
+    import {w2ui, w2form, w2grid, w2popup, w2utils} from '/lib/w2ui.es6.min.js'
 
     window.w2ui = w2ui
 
     w2utils.settings.dataType = 'JSON'
-    w2utils.formatters['string'] = (_, extra) => w2utils.encodeTags(extra.value)
+    w2utils.formatters['text'] = (_, extra) => w2utils.encodeTags(`${extra.value}`)
     w2utils.formatters['dropdown'] = (_, extra) => w2utils.encodeTags(extra.value?.text)
 
     function getDropdownListOptions(url) {
@@ -78,14 +78,14 @@
         {
           field: 'name',
           text: 'Name',
-          render: 'string',
+          render: 'text',
           size: '250px',
           sortable: true,
         },
         {
           field: 'description',
           text: 'Description',
-          render: 'string',
+          render: 'text',
           size: '400px',
           sortable: true,
           editable: {type: 'text'},
@@ -275,7 +275,7 @@
           {
             field: 'name',
             text: 'Name',
-            render: 'string',
+            render: 'text',
             size: '250px',
           },
         ],

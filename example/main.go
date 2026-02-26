@@ -17,17 +17,17 @@ import (
 
 const address = "localhost:3000"
 
-//go:embed index.html
+//go:embed index.html lib
 var staticFS embed.FS
 
 var db *sql.DB
 
 type Todo struct {
-	ID          int                 `json:"id"`
-	Name        string              `json:"name"`
-	Description w2.Editable[string] `json:"description"`
-	Quantity    w2.Editable[int]    `json:"quantity"`
-	Status      w2.EditableDropdown `json:"status"`
+	ID          int              `json:"id"`
+	Name        string           `json:"name"`
+	Description w2.Field[string] `json:"description"`
+	Quantity    w2.Field[int]    `json:"quantity"`
+	Status      w2.Dropdown      `json:"status"`
 }
 
 type Status struct {
@@ -77,10 +77,7 @@ func main() {
 	}
 
 	router := http.NewServeMux()
-
-	router.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFileFS(w, r, staticFS, "index.html")
-	})
+	router.Handle("/", http.FileServerFS(staticFS))
 
 	v1 := http.NewServeMux()
 
@@ -210,9 +207,9 @@ func postTodoGridSave(w http.ResponseWriter, r *http.Request) {
 		ub := sqlbuilder.Update("todo")
 		ub.Where(ub.EQ("id", change.ID))
 
-		w2sqlbuilder.SetEditableWithDefault(ub, change.Description, "description")
-		w2sqlbuilder.SetEditable(ub, change.Quantity, "quantity")
-		w2sqlbuilder.SetEditable(ub, change.Status.ID, "status_id")
+		w2sqlbuilder.SetFieldNoNull(ub, change.Description, "description")
+		w2sqlbuilder.SetField(ub, change.Quantity, "quantity")
+		w2sqlbuilder.SetField(ub, change.Status.ID, "status_id")
 
 		query, args := ub.BuildWithFlavor(sqlbuilder.SQLite)
 		if _, err := tx.Exec(query, args...); err != nil {
@@ -344,7 +341,7 @@ func getStatusDropdown(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var records []w2.DropdownValue
+	var records []w2.Dropdown
 
 	const query = "select id, name from status where name like ? order by position limit ?;"
 	rows, err := db.Query(query, fmt.Sprintf("%%%s%%", req.Search), req.Max)
@@ -356,7 +353,7 @@ func getStatusDropdown(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var record w2.DropdownValue
+		var record w2.Dropdown
 		if err := rows.Scan(&record.ID, &record.Text); err != nil {
 			res := w2.NewErrorResponse(err.Error())
 			res.Write(w, http.StatusInternalServerError)

@@ -11,7 +11,6 @@ This package offers Go bindings for the [w2ui JavaScript UI Library](https://git
   - [SQL Builder](#sql-builder)
   - [Utils](#utils)
 - [Example](#example)
-- [Changelog](#changelog)
 - [License](#license)
 
 ## Features
@@ -160,7 +159,7 @@ if err != nil {
 
 // Process the request based on req.Max and req.Search...
 
-records := []w2.DropdownValue{{ID: 1, Text: "Open"}, {ID: 2, Text: "Closed"}}
+records := []w2.Dropdown{}
 res := w2.NewDropdownResponse(records)
 res.Write(w)
 ```
@@ -228,21 +227,21 @@ w2sqlbuilder.Offset(sb, req)
 
 Use this approach to apply **inline changes** to editable `w2grid` fields.
 
-To track whether a field was included in the request, wrap it with the `w2.Editable` type:
+To track whether a field was included in the request, wrap it with the `w2.Field` type:
 
 ```go
 type Todo struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
-	Description w2.Editable[string] `json:"description"`
-	Quantity    w2.Editable[int]    `json:"quantity"`
+	ID          int              `json:"id"`
+	Name        string           `json:"name"`
+	Description w2.Field[string] `json:"description"`
+	Quantity    w2.Field[int]    `json:"quantity"`
 }
 ```
 
 Update functions:
 
-- `w2sqlbuilder.SetEditable`: updates the field only if a value **is provided**. Uses **null** if the value **is empty**.
-- `w2sqlbuilder.SetEditableWithDefault`: updates the field only if a value **is provided**. Uses the **zero value** if value **is empty**.
+- `w2sqlbuilder.SetField`: updates the field only if a value **is provided**. Uses **null** if the value **is empty**.
+- `w2sqlbuilder.SetFieldNoNull`: updates the field only if a value **is provided**. Uses the **zero value** if value **is empty**.
 
 ```go
 req, _ := w2.ParseGridSaveRequest[Todo](r.Body)
@@ -251,8 +250,8 @@ for _, change := range req.Changes {
 	ub := sqlbuilder.Update("todo")
 	ub.Where(ub.EQ("id", change.ID))
 
-	w2sqlbuilder.SetEditable(ub, change.Description, "description")
-	w2sqlbuilder.SetEditable(ub, change.Quantity, "quantity")
+	w2sqlbuilder.SetField(ub, change.Description, "description")
+	w2sqlbuilder.SetField(ub, change.Quantity, "quantity")
 
 	// ...
 }
@@ -288,13 +287,6 @@ go run example/main.go
 ```
 
 Starts the server on `http://localhost:3000`
-
-## Changelog
-
-- v0.2.8 2025-12-06 - Update go-sqlbuilder to v1.38
-- v0.2.7 2025-10-19 - EditableDropdown support for clean w2form records
-- v0.2.6 2025-05-24 - Write methods now return errors
-- v0.2.5 2025-05-16 - First stable release
 
 ## License
 

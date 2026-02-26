@@ -38,26 +38,21 @@ func (res DropdownResponse[T]) Write(w http.ResponseWriter) error {
 	return err
 }
 
-type DropdownValue struct {
-	ID   int    `json:"id"`
-	Text string `json:"text"`
+type Dropdown struct {
+	ID   Field[int]    `json:"id"`
+	Text Field[string] `json:"text"`
 }
 
-type EditableDropdown struct {
-	ID   Editable[int]    `json:"id"`
-	Text Editable[string] `json:"text"`
-}
-
-func (e *EditableDropdown) UnmarshalJSON(data []byte) error {
+func (d *Dropdown) UnmarshalJSON(data []byte) error {
 	if string(data) == "null" || string(data) == `""` {
-		e.ID.Provided = true
-		e.Text.Provided = true
+		d.ID.Provided = true
+		d.Text.Provided = true
 		return nil
 	}
 
 	// parse integer with ID
 	// - w2form saveCleanRecord is true (default)
-	if err := json.Unmarshal(data, &e.ID); err == nil {
+	if err := json.Unmarshal(data, &d.ID); err == nil {
 		return nil
 	}
 
@@ -69,11 +64,11 @@ func (e *EditableDropdown) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if err := json.Unmarshal(raw["id"], &e.ID); err != nil {
+	if err := json.Unmarshal(raw["id"], &d.ID); err != nil {
 		return err
 	}
 
-	if err := json.Unmarshal(raw["text"], &e.Text); err != nil {
+	if err := json.Unmarshal(raw["text"], &d.Text); err != nil {
 		return err
 	}
 

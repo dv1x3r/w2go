@@ -8,12 +8,12 @@ import (
 )
 
 type Todo struct {
-	ID       int                 `json:"id"`
-	Name     w2.Editable[string] `json:"name,omitzero"`
-	Quantity w2.Editable[int]    `json:"quantity,omitzero"`
+	ID       int              `json:"id"`
+	Name     w2.Field[string] `json:"name,omitzero"`
+	Quantity w2.Field[int]    `json:"quantity,omitzero"`
 }
 
-func TestEditable(t *testing.T) {
+func TestField(t *testing.T) {
 	t.Run("JSONRoundTrip", func(t *testing.T) {
 		tests := []struct {
 			InputJSON    string
@@ -24,8 +24,8 @@ func TestEditable(t *testing.T) {
 				InputJSON: `{"id": 1, "name": "Buy milk", "quantity": 2}`,
 				Expected: Todo{
 					ID:       1,
-					Name:     w2.NewEditableWithValue("Buy milk"),
-					Quantity: w2.NewEditableWithValue(2),
+					Name:     w2.NewField("Buy milk"),
+					Quantity: w2.NewField(2),
 				},
 				ExpectedJSON: `{"id":1,"name":"Buy milk","quantity":2}`,
 			},
@@ -33,8 +33,8 @@ func TestEditable(t *testing.T) {
 				InputJSON: `{"id": 2, "name": null}`,
 				Expected: Todo{
 					ID:       2,
-					Name:     w2.NewEditable[string](),
-					Quantity: w2.Editable[int]{},
+					Name:     w2.Field[string]{Provided: true},
+					Quantity: w2.Field[int]{Provided: false},
 				},
 				ExpectedJSON: `{"id":2,"name":null}`,
 			},
@@ -42,8 +42,8 @@ func TestEditable(t *testing.T) {
 				InputJSON: `{"id": 3}`,
 				Expected: Todo{
 					ID:       3,
-					Name:     w2.Editable[string]{},
-					Quantity: w2.Editable[int]{},
+					Name:     w2.Field[string]{},
+					Quantity: w2.Field[int]{},
 				},
 				ExpectedJSON: `{"id":3}`,
 			},
