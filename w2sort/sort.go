@@ -6,7 +6,7 @@ import (
 	"github.com/dv1x3r/w2go/w2"
 )
 
-func ReorderArray(a []int, r w2.GridReorderRequest) error {
+func ReorderArray(a []int, r w2.ReorderGridRequest) error {
 	n := len(a)
 
 	if n == 0 {

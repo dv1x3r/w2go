@@ -1,36 +1,18 @@
 # Go bindings for w2ui
 
-This package offers Go bindings for the [w2ui JavaScript UI Library](https://github.com/vitmalina/w2ui).
+Go bindings for the [w2ui JavaScript UI Library](https://github.com/vitmalina/w2ui).
 
-- [Features](#features)
+Handles request parsing, response serialization, SQL query building, and database operations for `w2grid`, `w2form`, and dropdown components running in JSON mode.
+
 - [Install](#install)
+- [Packages](#packages)
 - [Usage](#usage)
-  - [w2grid](#w2grid)
-  - [w2form](#w2form)
-  - [Dropdown](#dropdown)
-  - [SQL Builder](#sql-builder)
-  - [Utils](#utils)
-- [Example](#example)
+  - [Parsing requests and writing responses](#parsing-requests-and-writing-responses)
+  - [w2sql - SQL builder integration](#w2sql--sql-builder-integration)
+  - [w2db - database helpers](#w2db--database-helpers)
+  - [w2sort - array reordering](#w2sort--array-reordering)
+- [Examples](#examples)
 - [License](#license)
-
-## Features
-
-- `w2grid` support in `JSON` mode:
-  - **Pagination**, **sorting**, and **search**;
-  - **Inline editing** with typed updates;
-  - **Batch delete**;
-  - **Drag and Drop row reordering**;
-
-- `w2form` support in `JSON` mode:
-  - **Record retrieval**;
-  - **Form submission (create/update)**;
-
-- **Dropdowns**:
-  - Reusable across `w2grid` and `w2form` components;
-  - **Searchable** and **dynamic**;
-
-- **SQL Builder integration**:
-  - Translate `w2grid` data request into SQL with `go-sqlbuilder`;
 
 ## Install
 
@@ -38,255 +20,259 @@ This package offers Go bindings for the [w2ui JavaScript UI Library](https://git
 go get github.com/dv1x3r/w2go
 ```
 
+## Packages
+
+| Package | Description |
+|---------|-------------|
+| `w2` | Core types, request parsers, and response writers |
+| `w2sql` | Translates w2ui requests into SQL (filters, sorters, limits, updates) using `go-sqlbuilder` |
+| `w2db` | High-level CRUD helpers - wraps `w2sql` and executes queries against a `*sql.DB` or `*sql.Tx` |
+| `w2sort` | In-memory slice reordering for drag-and-drop support |
+| `w2ui` | Embedded w2ui JS/CSS assets served via `embed.FS` |
+
+### Choosing between `w2sql` and `w2db`
+
+- Use **`w2sql`** when you want full control over your queries - build them with `go-sqlbuilder`, apply w2ui filters/sorters with `w2sql`, then execute them yourself.
+- Use **`w2db`** when you want to skip the boilerplate - pass your options and a `*sql.DB` or `*sql.Tx`, and it handles the rest.
+
+Both approaches are shown in the [examples](#examples).
+
 ## Usage
 
-`w2go` types are JSON-serializable and work seamlessly with frameworks like `Echo` or `Fiber`, or standard `net/http`.
-The following examples use Go's standard `net/http` library: `(w http.ResponseWriter, r *http.Request)`.
+`w2go` is framework-agnostic and works with `net/http`, `Echo`, `Fiber`, or any other Go HTTP framework. The snippets below use standard `net/http`.
 
-### w2grid
+### Parsing requests and writing responses
 
-**Get Records**
+The `w2` package handles the JSON parsing between w2ui and your server.
+
+**w2grid**
 
 ```go
-req, err := w2.ParseGridDataRequest(r.URL.Query().Get("request"))
-if err != nil {
-	res := w2.NewErrorResponse(err.Error())
-	res.Write(w, http.StatusBadRequest)
-	return
-}
-
-// Process the request...
-
-records := []Todo{{ID: 1, Name: "Buy groceries"}}
-res := w2.NewGridDataResponse(records, len(records))
+// GET - load records
+req, err := w2.ParseGetGridRequest(r.URL.Query().Get("request"))
+res := w2.NewGetGridResponse(records, total)
 res.Write(w)
-```
 
-**Save Changes**
+// POST - save inline edits
+req, err := w2.ParseSaveGridRequest[Todo](r.Body)
+// req.Changes is a typed slice
+res := w2.NewSuccessResponse()
+res.Write(w, http.StatusOK)
 
-```go
-req, err := w2.ParseGridSaveRequest[Todo](r.Body)
-if err != nil {
-	res := w2.NewErrorResponse(err.Error())
-	res.Write(w, http.StatusBadRequest)
-	return
-}
+// POST - delete records
+req, err := w2.ParseRemoveGridRequest(r.Body)
+// req.ID is []int
+res := w2.NewSuccessResponse()
+res.Write(w, http.StatusOK)
 
-// Apply updates for req.Changes slice...
-
+// POST - drag-and-drop reorder (single row)
+req, err := w2.ParseReorderGridRequest(r.Body)
+// req.RecID int, req.MoveBefore int, req.Bottom bool
 res := w2.NewSuccessResponse()
 res.Write(w, http.StatusOK)
 ```
 
-**Remove Records**
+**w2form**
 
 ```go
-req, err := w2.ParseGridRemoveRequest(r.Body)
-if err != nil {
-	res := w2.NewErrorResponse(err.Error())
-	res.Write(w, http.StatusBadRequest)
-	return
-}
+// GET - load record
+req, err := w2.ParseGetFormRequest(r.URL.Query().Get("request"))
+// req.RecID holds the record id
+res := w2.NewGetFormResponse(record)
+res.Write(w)
 
-// Apply updates for req.ID slice...
-
-res := w2.NewSuccessResponse()
-res.Write(w, http.StatusOK)
-```
-
-**Reorder Rows**
-
-```go
-req, err := w2.ParseGridReorderRequest(r.Body)
-if err != nil {
-	res := w2.NewErrorResponse(err.Error())
-	res.Write(w, http.StatusBadRequest)
-	return
-}
-
-// Apply updates based on req.RecID, req.MoveBefore and req.Bottom...
-
-res := w2.NewSuccessResponse()
-res.Write(w, http.StatusOK)
-```
-
-### w2form
-
-**Get Record**
-
-```go
-req, err := w2.ParseFormGetRequest(r.URL.Query().Get("request"))
-if err != nil {
-	res := w2.NewErrorResponse(err.Error())
-	res.Write(w, http.StatusBadRequest)
-	return
-}
-
-// Process the request based on req.RecID...
-
-record := Todo{ID: 1, Name: "Example"}
-res := w2.NewFormGetResponse(record)
+// POST - save record
+req, err := w2.ParseSaveFormRequest[Todo](r.Body)
+// req.Record holds the record
+res := w2.NewSaveFormResponse(req.RecID)
 res.Write(w)
 ```
 
-**Save Record**
+**Dropdown**
 
 ```go
-req, err := w2.ParseFormSaveRequest[Todo](r.Body)
-if err != nil {
-	res := w2.NewErrorResponse(err.Error())
-	res.Write(w, http.StatusBadRequest)
-	return
-}
-
-// Insert or update based on req.RecID...
-
-res := w2.NewFormSaveResponse(req.RecID)
+// GET - load options
+req, err := w2.ParseGetDropdownRequest(r.URL.Query().Get("request"))
+// req.Search string, req.Max int
+res := w2.NewGetDropdownResponse(records)
 res.Write(w)
 ```
 
-### Dropdown
-
-**Get Records**
+**Error response**
 
 ```go
-req, err := w2.ParseDropdownRequest(r.URL.Query().Get("request"))
-if err != nil {
-	res := w2.NewErrorResponse(err.Error())
-	res.Write(w, http.StatusBadRequest)
-	return
-}
-
-// Process the request based on req.Max and req.Search...
-
-records := []w2.Dropdown{}
-res := w2.NewDropdownResponse(records)
-res.Write(w)
+res := w2.NewErrorResponse("something went wrong")
+res.Write(w, http.StatusInternalServerError)
 ```
 
-### SQL Builder
+**`w2.Field[T]` - tracking inline edits**
 
-Use `w2sqlbuilder` with `github.com/huandu/go-sqlbuilder` to apply filters, sorters, limits, and updates.
-
-**Apply Filters**
-
-```go
-req, _ := w2.ParseGridDataRequest(r.URL.Query().Get("request"))
-
-// Create a SelectBuilder
-sb := sqlbuilder.NewSelectBuilder()
-sb.Select("t.id", "t.name")
-sb.From("todo as t")
-
-// Define the w2ui field to database field name mapping.
-mapping := map[string]string{
-	"id":   "t.id",
-	"name": "t.name",
-}
-
-// Apply query filters based on the request and mapping.
-w2sqlbuilder.Where(sb, req, mapping)
-```
-
-**Apply Sorters**
-
-```go
-req, _ := w2.ParseGridDataRequest(r.URL.Query().Get("request"))
-
-// Create a SelectBuilder
-sb := sqlbuilder.NewSelectBuilder()
-sb.Select("t.id", "t.name")
-sb.From("todo as t")
-
-// Define the w2ui field to database field name mapping.
-mapping := map[string]string{
-	"id":   "t.id",
-	"name": "t.name",
-}
-
-// Apply query sorters based on the request and mapping.
-w2sqlbuilder.OrderBy(sb, req, mapping)
-```
-
-**Apply Limits**
-
-```go
-req, _ := w2.ParseGridDataRequest(r.URL.Query().Get("request"))
-
-// Create a SelectBuilder
-sb := sqlbuilder.NewSelectBuilder()
-sb.Select("t.id", "t.name")
-sb.From("todo as t")
-
-// Apply limit and offset based on the request.
-w2sqlbuilder.Limit(sb, req)
-w2sqlbuilder.Offset(sb, req)
-```
-
-**Apply Updates**
-
-Use this approach to apply **inline changes** to editable `w2grid` fields.
-
-To track whether a field was included in the request, wrap it with the `w2.Field` type:
+Inline grid edits only send changed fields. Wrap nullable or optional fields with `w2.Field[T]` to distinguish between "not sent", "sent as null", and "sent with a value":
 
 ```go
 type Todo struct {
-	ID          int              `json:"id"`
-	Name        string           `json:"name"`
-	Description w2.Field[string] `json:"description"`
-	Quantity    w2.Field[int]    `json:"quantity"`
+    ID          int              `json:"id"`
+    Name        string           `json:"name"`
+    Description w2.Field[string] `json:"description"`
+    Quantity    w2.Field[int]    `json:"quantity"`
 }
 ```
 
-Update functions:
+### w2sql - SQL builder integration
 
-- `w2sqlbuilder.SetField`: updates the field only if a value **is provided**. Uses **null** if the value **is empty**.
-- `w2sqlbuilder.SetFieldNoNull`: updates the field only if a value **is provided**. Uses the **zero value** if value **is empty**.
+`w2sql` translates w2ui request data into SQL clauses using [`go-sqlbuilder`](https://github.com/huandu/go-sqlbuilder). Field names are mapped through a whitelist to prevent injection.
 
 ```go
-req, _ := w2.ParseGridSaveRequest[Todo](r.Body)
+req, _ := w2.ParseGetGridRequest(r.URL.Query().Get("request"))
 
+sb := sqlbuilder.Select("t.id", "t.name", "t.description").From("todo as t")
+
+mapping := map[string]string{
+    "id":   "t.id",
+    "name": "t.name",
+}
+
+w2sql.Where(sb, req, mapping)   // search filters
+w2sql.OrderBy(sb, req, mapping) // column sorting
+w2sql.Limit(sb, req)            // pagination limit
+w2sql.Offset(sb, req)           // pagination offset
+
+query, args := sb.BuildWithFlavor(sqlbuilder.SQLite)
+```
+
+**Applying inline updates**
+
+- `w2sql.Set` - sets the column if the field was provided; writes `NULL` if the value is empty.
+- `w2sql.SetNoNull` - sets the column if the field was provided; writes the zero value if empty.
+
+```go
 for _, change := range req.Changes {
-	ub := sqlbuilder.Update("todo")
-	ub.Where(ub.EQ("id", change.ID))
-
-	w2sqlbuilder.SetField(ub, change.Description, "description")
-	w2sqlbuilder.SetField(ub, change.Quantity, "quantity")
-
-	// ...
+    ub := sqlbuilder.Update("todo")
+    ub.Where(ub.EQ("id", change.ID))
+    w2sql.SetNoNull(ub, change.Name, "name")
+    w2sql.Set(ub, change.Description, "description")
+    w2sql.Set(ub, change.Quantity, "quantity")
 }
 ```
 
-### Utils
+### w2db - database helpers
 
-**ReorderArray**
+`w2db` eliminates the boilerplate of building queries and scanning rows. Each function accepts a `*sql.DB`, `*sql.Tx`, or any value that satisfies the `QueryDB` / `ExecDB` / `QueryExecDB` interface.
 
-Use `w2sort.ReorderArray` to reorder a slice of integers based on `w2grid` drag and drop:
+**w2grid**
 
 ```go
-req, _ := w2.ParseGridReorderRequest(r.Body)
+// Load records with pagination, sorting, and search
+res, err := w2db.GetGrid(db, req, w2db.GetGridOptions[Todo]{
+    From:           "todo as t",
+    Select:         []string{"t.id", "t.name", "t.description"},
+    WhereMapping:   map[string]string{"id": "t.id", "name": "t.name"},
+    OrderByMapping: map[string]string{"id": "t.id", "name": "t.name"},
+    Scan: func(rows *sql.Rows) (Todo, error) {
+        var r Todo
+        return r, rows.Scan(&r.ID, &r.Name, &r.Description)
+    },
+})
 
-// ids represents the current order (e.g., from database)
-ids := []int{1, 2, 3, 4, 5}
+// Save inline edits
+affected, err := w2db.SaveGrid(db, req, w2db.SaveGridOptions[Todo]{
+    BuildUpdate: func(change Todo) *sqlbuilder.UpdateBuilder {
+        ub := sqlbuilder.Update("todo")
+        ub.Where(ub.EQ("id", change.ID))
+        w2sql.SetNoNull(ub, change.Name, "name")
+        w2sql.Set(ub, change.Description, "description")
+        return ub
+    },
+})
 
-// Reorder the slice based on the drag and drop request
-if err := w2sort.ReorderArray(ids, req); err != nil {
-	// handle error (e.g., id not found in slice)
-}
+// Delete records
+affected, err := w2db.RemoveGrid(db, req, w2db.RemoveGridOptions{
+    From:    "todo",
+    IDField: "id",
+})
 
-// ids now contains the new order
-// Persist the new order to the database...
+// Reorder rows by updating a position column
+affected, err := w2db.ReorderGrid(tx, req, w2db.ReorderGridOptions{
+    Update:   "todo",
+    IDField:  "id",
+    SetField: "position",
+})
 ```
 
-## Example
+**w2form**
 
-Run a **full** CRUD demo using in-memory SQLite:
+```go
+// Load a single record by ID
+res, err := w2db.GetForm(db, req, w2db.GetFormOptions[Todo]{
+    From:    "todo",
+    IDField: "id",
+    Select:  []string{"id", "name", "description"},
+    Scan: func(row *sql.Row) (Todo, error) {
+        var r Todo
+        return r, row.Scan(&r.ID, &r.Name, &r.Description)
+    },
+})
+
+// Insert a new record
+lastID, err := w2db.InsertForm(db, req, w2db.InsertFormOptions{
+    Into:   "todo",
+    Cols:   []string{"name", "description"},
+    Values: []any{req.Record.Name, req.Record.Description},
+})
+
+// Update an existing record
+affected, err := w2db.UpdateForm(db, req, w2db.UpdateFormOptions{
+    Update:  "todo",
+    IDField: "id",
+    Cols:    []string{"name", "description"},
+    Values:  []any{req.Record.Name, req.Record.Description},
+})
+```
+
+**Dropdown**
+
+```go
+// Load options filtered by search text
+res, err := w2db.GetDropdown(db, req, w2db.GetDropdownOptions{
+    From:         "status",
+    IDField:      "id",
+    TextField:    "name",
+    OrderByField: "position",
+})
+```
+
+### w2sort - array reordering
+
+`w2sort.ReorderArray` applies a drag-and-drop reorder request to a slice of IDs in memory.
+
+```go
+req, _ := w2.ParseReorderGridRequest(r.Body)
+
+ids := []int{1, 2, 3, 4, 5} // current order from the database
+
+if err := w2sort.ReorderArray(ids, req); err != nil {
+    // req.RecID not found in the slice
+}
+
+// ids now reflects the new order - persist it to the database
+```
+
+## Examples
+
+Two complete CRUD demos are included, both using an in-memory SQLite database:
+
+| Example | Approach |
+|---------|----------|
+| [`examples/w2db`](./examples/w2db) | Uses `w2db` helpers |
+| [`examples/w2sql`](./examples/w2sql) | Uses `w2sql` + raw `database/sql` for full control |
 
 ```shell
-go run example/main.go
+go run ./examples/w2db/main.go
+# or
+go run ./examples/w2sql/main.go
 ```
 
-Starts the server on `http://localhost:3000`
+Open `http://localhost:3000` in your browser.
 
 ## License
 

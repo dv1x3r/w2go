@@ -3,13 +3,14 @@ package main
 import (
 	"database/sql"
 	"embed"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/dv1x3r/w2go/w2"
 	"github.com/dv1x3r/w2go/w2sort"
-	"github.com/dv1x3r/w2go/w2sql/w2sqlbuilder"
+	"github.com/dv1x3r/w2go/w2sql"
 	"github.com/dv1x3r/w2go/w2ui"
 
 	"github.com/huandu/go-sqlbuilder"
@@ -104,7 +105,7 @@ func main() {
 }
 
 func getTodoGridRecords(w http.ResponseWriter, r *http.Request) {
-	req, err := w2.ParseGridDataRequest(r.URL.Query().Get("request"))
+	req, err := w2.ParseGetGridRequest(r.URL.Query().Get("request"))
 	if err != nil {
 		res := w2.NewErrorResponse(err.Error())
 		res.Write(w, http.StatusBadRequest)
@@ -115,7 +116,7 @@ func getTodoGridRecords(w http.ResponseWriter, r *http.Request) {
 	var records []Todo
 
 	sb := sqlbuilder.Select("count(*)").From("todo as t")
-	w2sqlbuilder.Where(sb, req, map[string]string{
+	w2sql.Where(sb, req, map[string]string{
 		"id":          "t.id",
 		"name":        "t.name",
 		"description": "t.description",
@@ -126,7 +127,7 @@ func getTodoGridRecords(w http.ResponseWriter, r *http.Request) {
 	// query total number of rows with w2grid filters applied
 	query, args := sb.BuildWithFlavor(sqlbuilder.SQLite)
 	row := db.QueryRow(query, args...)
-	if err := row.Scan(&total); err != nil && err != sql.ErrNoRows {
+	if err := row.Scan(&total); err != nil && !errors.Is(err, sql.ErrNoRows) {
 		res := w2.NewErrorResponse(err.Error())
 		res.Write(w, http.StatusInternalServerError)
 		return
@@ -142,7 +143,7 @@ func getTodoGridRecords(w http.ResponseWriter, r *http.Request) {
 		"s.name as status_name",
 	)
 	sb.JoinWithOption(sqlbuilder.LeftJoin, "status as s", "s.id = t.status_id")
-	w2sqlbuilder.OrderBy(sb, req, map[string]string{
+	w2sql.OrderBy(sb, req, map[string]string{
 		"id":          "t.id",
 		"name":        "t.name",
 		"description": "t.description",
@@ -150,8 +151,8 @@ func getTodoGridRecords(w http.ResponseWriter, r *http.Request) {
 		"status":      "s.name",
 	})
 
-	w2sqlbuilder.Limit(sb, req)
-	w2sqlbuilder.Offset(sb, req)
+	w2sql.Limit(sb, req)
+	w2sql.Offset(sb, req)
 
 	query, args = sb.BuildWithFlavor(sqlbuilder.SQLite)
 	rows, err := db.Query(query, args...)
@@ -186,12 +187,12 @@ func getTodoGridRecords(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := w2.NewGridDataResponse(records, total)
+	res := w2.NewGetGridResponse(records, total)
 	res.Write(w)
 }
 
 func postTodoGridSave(w http.ResponseWriter, r *http.Request) {
-	req, err := w2.ParseGridSaveRequest[Todo](r.Body)
+	req, err := w2.ParseSaveGridRequest[Todo](r.Body)
 	if err != nil {
 		res := w2.NewErrorResponse(err.Error())
 		res.Write(w, http.StatusBadRequest)
@@ -210,9 +211,9 @@ func postTodoGridSave(w http.ResponseWriter, r *http.Request) {
 		ub := sqlbuilder.Update("todo")
 		ub.Where(ub.EQ("id", change.ID))
 
-		w2sqlbuilder.SetFieldNoNull(ub, change.Description, "description")
-		w2sqlbuilder.SetField(ub, change.Quantity, "quantity")
-		w2sqlbuilder.SetField(ub, change.Status.ID, "status_id")
+		w2sql.SetNoNull(ub, change.Description, "description")
+		w2sql.Set(ub, change.Quantity, "quantity")
+		w2sql.Set(ub, change.Status.ID, "status_id")
 
 		query, args := ub.BuildWithFlavor(sqlbuilder.SQLite)
 		if _, err := tx.Exec(query, args...); err != nil {
@@ -233,7 +234,7 @@ func postTodoGridSave(w http.ResponseWriter, r *http.Request) {
 }
 
 func postTodoGridRemove(w http.ResponseWriter, r *http.Request) {
-	req, err := w2.ParseGridRemoveRequest(r.Body)
+	req, err := w2.ParseRemoveGridRequest(r.Body)
 	if err != nil {
 		res := w2.NewErrorResponse(err.Error())
 		res.Write(w, http.StatusBadRequest)
@@ -255,7 +256,7 @@ func postTodoGridRemove(w http.ResponseWriter, r *http.Request) {
 }
 
 func getTodoForm(w http.ResponseWriter, r *http.Request) {
-	req, err := w2.ParseFormGetRequest(r.URL.Query().Get("request"))
+	req, err := w2.ParseGetFormRequest(r.URL.Query().Get("request"))
 	if err != nil {
 		res := w2.NewErrorResponse(err.Error())
 		res.Write(w, http.StatusBadRequest)
@@ -285,8 +286,8 @@ func getTodoForm(w http.ResponseWriter, r *http.Request) {
 		&record.Status.ID,
 		&record.Status.Text,
 	)
-	if err == sql.ErrNoRows {
-		res := w2.NewErrorResponse("todo not found")
+	if errors.Is(err, sql.ErrNoRows) {
+		res := w2.NewErrorResponse(http.StatusText(http.StatusNotFound))
 		res.Write(w, http.StatusNotFound)
 		return
 	} else if err != nil {
@@ -295,12 +296,12 @@ func getTodoForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := w2.NewFormGetResponse(record)
+	res := w2.NewGetFormResponse(record)
 	res.Write(w)
 }
 
 func postTodoForm(w http.ResponseWriter, r *http.Request) {
-	req, err := w2.ParseFormSaveRequest[Todo](r.Body)
+	req, err := w2.ParseSaveFormRequest[Todo](r.Body)
 	if err != nil {
 		res := w2.NewErrorResponse(err.Error())
 		res.Write(w, http.StatusBadRequest)
@@ -332,12 +333,12 @@ func postTodoForm(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	res := w2.NewFormSaveResponse(req.RecID)
+	res := w2.NewSaveFormResponse(req.RecID)
 	res.Write(w)
 }
 
 func getStatusDropdown(w http.ResponseWriter, r *http.Request) {
-	req, err := w2.ParseDropdownRequest(r.URL.Query().Get("request"))
+	req, err := w2.ParseGetDropdownRequest(r.URL.Query().Get("request"))
 	if err != nil {
 		res := w2.NewErrorResponse(err.Error())
 		res.Write(w, http.StatusBadRequest)
@@ -371,12 +372,12 @@ func getStatusDropdown(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := w2.NewDropdownResponse(records)
+	res := w2.NewGetDropdownResponse(records)
 	res.Write(w)
 }
 
 func getStatusGridRecords(w http.ResponseWriter, r *http.Request) {
-	req, err := w2.ParseGridDataRequest(r.URL.Query().Get("request"))
+	req, err := w2.ParseGetGridRequest(r.URL.Query().Get("request"))
 	if err != nil {
 		res := w2.NewErrorResponse(err.Error())
 		res.Write(w, http.StatusBadRequest)
@@ -389,7 +390,7 @@ func getStatusGridRecords(w http.ResponseWriter, r *http.Request) {
 	sb := sqlbuilder.Select("count(*)").From("status")
 	query, args := sb.BuildWithFlavor(sqlbuilder.SQLite)
 	row := db.QueryRow(query, args...)
-	if err := row.Scan(&total); err != nil && err != sql.ErrNoRows {
+	if err := row.Scan(&total); err != nil && !errors.Is(err, sql.ErrNoRows) {
 		res := w2.NewErrorResponse(err.Error())
 		res.Write(w, http.StatusInternalServerError)
 		return
@@ -398,8 +399,8 @@ func getStatusGridRecords(w http.ResponseWriter, r *http.Request) {
 	sb.Select("id", "name")
 	sb.OrderByAsc("position")
 
-	w2sqlbuilder.Limit(sb, req)
-	w2sqlbuilder.Offset(sb, req)
+	w2sql.Limit(sb, req)
+	w2sql.Offset(sb, req)
 
 	query, args = sb.BuildWithFlavor(sqlbuilder.SQLite)
 	rows, err := db.Query(query, args...)
@@ -426,12 +427,12 @@ func getStatusGridRecords(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := w2.NewGridDataResponse(records, total)
+	res := w2.NewGetGridResponse(records, total)
 	res.Write(w)
 }
 
 func postStatusGridReorder(w http.ResponseWriter, r *http.Request) {
-	req, err := w2.ParseGridReorderRequest(r.Body)
+	req, err := w2.ParseReorderGridRequest(r.Body)
 	if err != nil {
 		res := w2.NewErrorResponse(err.Error())
 		res.Write(w, http.StatusBadRequest)

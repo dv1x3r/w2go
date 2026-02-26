@@ -11,23 +11,23 @@ func TestGridReorderRequest(t *testing.T) {
 	t.Run("JSONRoundTrip", func(t *testing.T) {
 		tests := []struct {
 			InputJSON    string
-			Expected     w2.GridReorderRequest
+			Expected     w2.ReorderGridRequest
 			ExpectedJSON string
 		}{
 			{
 				InputJSON:    `{"recid": 1, "moveBefore": 42}`,
-				Expected:     w2.GridReorderRequest{RecID: 1, MoveBefore: 42, Bottom: false},
+				Expected:     w2.ReorderGridRequest{RecID: 1, MoveBefore: 42, Bottom: false},
 				ExpectedJSON: `{"recid":1,"moveBefore":42}`,
 			},
 			{
 				InputJSON:    `{"recid": 2, "moveBefore": "bottom"}`,
-				Expected:     w2.GridReorderRequest{RecID: 2, Bottom: true},
+				Expected:     w2.ReorderGridRequest{RecID: 2, Bottom: true},
 				ExpectedJSON: `{"recid":2,"moveBefore":"bottom"}`,
 			},
 		}
 
 		for _, test := range tests {
-			var req w2.GridReorderRequest
+			var req w2.ReorderGridRequest
 			err := json.Unmarshal([]byte(test.InputJSON), &req)
 			if err != nil {
 				t.Errorf("❌ Unmarshal error for input %s: %v", test.InputJSON, err)

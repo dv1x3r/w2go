@@ -12,38 +12,38 @@ func TestReorderArray(t *testing.T) {
 	t.Run("ReorderArray", func(t *testing.T) {
 		tests := []struct {
 			Input         []int
-			Request       w2.GridReorderRequest
+			Request       w2.ReorderGridRequest
 			Expected      []int
 			ExpectedError bool
 		}{
 			{
 				Input:    []int{1, 2, 3, 4, 5},
-				Request:  w2.GridReorderRequest{RecID: 2, MoveBefore: 4},
+				Request:  w2.ReorderGridRequest{RecID: 2, MoveBefore: 4},
 				Expected: []int{1, 3, 2, 4, 5},
 			},
 			{
 				Input:    []int{1, 2, 3, 4, 5},
-				Request:  w2.GridReorderRequest{RecID: 4, MoveBefore: 1},
+				Request:  w2.ReorderGridRequest{RecID: 4, MoveBefore: 1},
 				Expected: []int{4, 1, 2, 3, 5},
 			},
 			{
 				Input:    []int{1, 2, 3, 4, 5},
-				Request:  w2.GridReorderRequest{RecID: 3, Bottom: true},
+				Request:  w2.ReorderGridRequest{RecID: 3, Bottom: true},
 				Expected: []int{1, 2, 4, 5, 3},
 			},
 			{
 				Input:         []int{1, 2, 3},
-				Request:       w2.GridReorderRequest{RecID: 9, MoveBefore: 1},
+				Request:       w2.ReorderGridRequest{RecID: 9, MoveBefore: 1},
 				ExpectedError: true,
 			},
 			{
 				Input:         []int{1, 2, 3},
-				Request:       w2.GridReorderRequest{RecID: 2, MoveBefore: 9},
+				Request:       w2.ReorderGridRequest{RecID: 2, MoveBefore: 9},
 				ExpectedError: true,
 			},
 			{
 				Input:         []int{},
-				Request:       w2.GridReorderRequest{RecID: 1, MoveBefore: 2},
+				Request:       w2.ReorderGridRequest{RecID: 1, MoveBefore: 2},
 				ExpectedError: true,
 			},
 		}

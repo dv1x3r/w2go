@@ -1,4 +1,4 @@
-package w2sqlbuilder
+package w2sql
 
 import (
 	"fmt"
@@ -7,22 +7,42 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
+// Set updates the field only if a value is provided.
+// If the value is marked as valid, it sets the field to the provided value. Otherwise, it sets field to NULL.
+func Set[T any](ub *sqlbuilder.UpdateBuilder, value w2.Field[T], field string) {
+	if value.Provided {
+		if value.Valid {
+			ub.SetMore(ub.Assign(field, value.V))
+		} else {
+			ub.SetMore(ub.Assign(field, nil))
+		}
+	}
+}
+
+// SetNoNull updates the field only if a value is provided.
+// Unlike Assign, it always sets the field to the provided value even if invalid, using the zero value instead of NULL.
+func SetNoNull[T any](ub *sqlbuilder.UpdateBuilder, value w2.Field[T], field string) {
+	if value.Provided {
+		ub.SetMore(ub.Assign(field, value.V))
+	}
+}
+
 // Limit sets the LIMIT in SELECT based on provided W2GridRequest.
-func Limit(sb *sqlbuilder.SelectBuilder, r w2.GridDataRequest) {
+func Limit(sb *sqlbuilder.SelectBuilder, r w2.GetGridRequest) {
 	if r.Limit != 0 {
 		sb.Limit(r.Limit)
 	}
 }
 
 // Offset sets the LIMIT offset in SELECT based on provided W2GridRequest.
-func Offset(sb *sqlbuilder.SelectBuilder, r w2.GridDataRequest) {
+func Offset(sb *sqlbuilder.SelectBuilder, r w2.GetGridRequest) {
 	if r.Offset != 0 {
 		sb.Offset(r.Offset)
 	}
 }
 
 // Where sets expressions of WHERE in SELECT based on provided W2GridRequest and field mapping.
-func Where(sb *sqlbuilder.SelectBuilder, r w2.GridDataRequest, mapping map[string]string) {
+func Where(sb *sqlbuilder.SelectBuilder, r w2.GetGridRequest, mapping map[string]string) {
 	c := make([]string, 0, len(r.Search))
 
 	for _, s := range r.Search {
@@ -82,7 +102,7 @@ func Where(sb *sqlbuilder.SelectBuilder, r w2.GridDataRequest, mapping map[strin
 }
 
 // OrderBy sets columns of ORDER BY in SELECT based on provided W2GridRequest and field mapping.
-func OrderBy(sb *sqlbuilder.SelectBuilder, r w2.GridDataRequest, mapping map[string]string) {
+func OrderBy(sb *sqlbuilder.SelectBuilder, r w2.GetGridRequest, mapping map[string]string) {
 	for _, s := range r.Sort {
 		if field, ok := mapping[s.Field]; ok {
 			if s.Direction == "desc" {
@@ -91,25 +111,5 @@ func OrderBy(sb *sqlbuilder.SelectBuilder, r w2.GridDataRequest, mapping map[str
 				sb.OrderByAsc(field)
 			}
 		}
-	}
-}
-
-// SetField updates the field only if a value is provided.
-// If the value is marked as valid, it sets the field to the provided value. Otherwise, it sets field to NULL.
-func SetField[T any](ub *sqlbuilder.UpdateBuilder, value w2.Field[T], field string) {
-	if value.Provided {
-		if value.Valid {
-			ub.SetMore(ub.EQ(field, value.V))
-		} else {
-			ub.SetMore(ub.EQ(field, nil))
-		}
-	}
-}
-
-// SetFieldNoNull updates the field only if a value is provided.
-// Unlike SetField, it always sets the field to the provided value even if invalid, using the zero value instead of NULL.
-func SetFieldNoNull[T any](ub *sqlbuilder.UpdateBuilder, value w2.Field[T], field string) {
-	if value.Provided {
-		ub.SetMore(ub.EQ(field, value.V))
 	}
 }

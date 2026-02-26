@@ -5,39 +5,6 @@ import (
 	"net/http"
 )
 
-type DropdownRequest struct {
-	Max    int    `json:"max"`
-	Search string `json:"search"`
-}
-
-func ParseDropdownRequest(request string) (DropdownRequest, error) {
-	var req DropdownRequest
-	return req, json.Unmarshal([]byte(request), &req)
-}
-
-type DropdownResponse[T any] struct {
-	Status  Status `json:"status"`
-	Records []T    `json:"records"`
-}
-
-func NewDropdownResponse[T any](records []T) DropdownResponse[T] {
-	return DropdownResponse[T]{
-		Status:  StatusSuccess,
-		Records: records,
-	}
-}
-
-func (res DropdownResponse[T]) Write(w http.ResponseWriter) error {
-	data, err := json.Marshal(res)
-	if err != nil {
-		return err
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(data)
-	return err
-}
-
 type Dropdown struct {
 	ID   Field[int]    `json:"id"`
 	Text Field[string] `json:"text"`
@@ -73,4 +40,37 @@ func (d *Dropdown) UnmarshalJSON(data []byte) error {
 	}
 
 	return nil
+}
+
+type GetDropdownRequest struct {
+	Max    int    `json:"max"`
+	Search string `json:"search"`
+}
+
+func ParseGetDropdownRequest(request string) (GetDropdownRequest, error) {
+	var req GetDropdownRequest
+	return req, json.Unmarshal([]byte(request), &req)
+}
+
+type GetDropdownResponse[T any] struct {
+	Status  Status `json:"status"`
+	Records []T    `json:"records"`
+}
+
+func NewGetDropdownResponse[T any](records []T) GetDropdownResponse[T] {
+	return GetDropdownResponse[T]{
+		Status:  StatusSuccess,
+		Records: records,
+	}
+}
+
+func (res GetDropdownResponse[T]) Write(w http.ResponseWriter) error {
+	data, err := json.Marshal(res)
+	if err != nil {
+		return err
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(data)
+	return err
 }

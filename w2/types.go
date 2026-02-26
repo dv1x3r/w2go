@@ -38,7 +38,7 @@ func (res BaseResponse) Write(w http.ResponseWriter, statusCode int) error {
 	return err
 }
 
-type GridDataRequest struct {
+type GetGridRequest struct {
 	Limit       int          `json:"limit"`
 	Offset      int          `json:"offset"`
 	SearchLogic string       `json:"searchLogic"`
@@ -58,28 +58,28 @@ type GridSort struct {
 	Direction string `json:"direction"`
 }
 
-func ParseGridDataRequest(request string) (GridDataRequest, error) {
-	var req GridDataRequest
+func ParseGetGridRequest(request string) (GetGridRequest, error) {
+	var req GetGridRequest
 	return req, json.Unmarshal([]byte(request), &req)
 }
 
-type GridDataResponse[T any, V any] struct {
+type GetGridResponse[T any, V any] struct {
 	Status  Status `json:"status"`
 	Records []T    `json:"records,omitempty"`
 	Summary []V    `json:"summary,omitempty"`
 	Total   int    `json:"total,omitempty"`
 }
 
-func NewGridDataResponse[T any](records []T, total int) GridDataResponse[T, any] {
-	return GridDataResponse[T, any]{
+func NewGetGridResponse[T any](records []T, total int) GetGridResponse[T, any] {
+	return GetGridResponse[T, any]{
 		Status:  StatusSuccess,
 		Records: records,
 		Total:   total,
 	}
 }
 
-func NewGridDataResponseWithSummary[T any, V any](records []T, summary []V, total int) GridDataResponse[T, V] {
-	return GridDataResponse[T, V]{
+func NewGetGridResponseWithSummary[T any, V any](records []T, summary []V, total int) GetGridResponse[T, V] {
+	return GetGridResponse[T, V]{
 		Status:  StatusSuccess,
 		Records: records,
 		Summary: summary,
@@ -87,7 +87,7 @@ func NewGridDataResponseWithSummary[T any, V any](records []T, summary []V, tota
 	}
 }
 
-func (res GridDataResponse[T, V]) Write(w http.ResponseWriter) error {
+func (res GetGridResponse[T, V]) Write(w http.ResponseWriter) error {
 	data, err := json.Marshal(res)
 	if err != nil {
 		return err
@@ -98,48 +98,48 @@ func (res GridDataResponse[T, V]) Write(w http.ResponseWriter) error {
 	return err
 }
 
-type GridSaveRequest[T any] struct {
+type SaveGridRequest[T any] struct {
 	Changes []T `json:"changes"`
 }
 
-func ParseGridSaveRequest[T any](body io.Reader) (GridSaveRequest[T], error) {
-	var req GridSaveRequest[T]
+func ParseSaveGridRequest[T any](body io.Reader) (SaveGridRequest[T], error) {
+	var req SaveGridRequest[T]
 	return req, json.NewDecoder(body).Decode(&req)
 }
 
-type GridRemoveRequest struct {
+type RemoveGridRequest struct {
 	ID []int `json:"id"`
 }
 
-func ParseGridRemoveRequest(body io.Reader) (GridRemoveRequest, error) {
-	var req GridRemoveRequest
+func ParseRemoveGridRequest(body io.Reader) (RemoveGridRequest, error) {
+	var req RemoveGridRequest
 	return req, json.NewDecoder(body).Decode(&req)
 }
 
-type FormGetRequest struct {
+type GetFormRequest struct {
 	Action string `json:"action"`
 	Name   string `json:"name"`
 	RecID  int    `json:"recid"`
 }
 
-func ParseFormGetRequest(request string) (FormGetRequest, error) {
-	var req FormGetRequest
+func ParseGetFormRequest(request string) (GetFormRequest, error) {
+	var req GetFormRequest
 	return req, json.Unmarshal([]byte(request), &req)
 }
 
-type FormGetResponse[T any] struct {
+type GetFormResponse[T any] struct {
 	Status Status `json:"status"`
 	Record *T     `json:"record,omitempty"`
 }
 
-func NewFormGetResponse[T any](record T) FormGetResponse[T] {
-	return FormGetResponse[T]{
+func NewGetFormResponse[T any](record T) GetFormResponse[T] {
+	return GetFormResponse[T]{
 		Status: StatusSuccess,
 		Record: &record,
 	}
 }
 
-func (res FormGetResponse[T]) Write(w http.ResponseWriter) error {
+func (res GetFormResponse[T]) Write(w http.ResponseWriter) error {
 	data, err := json.Marshal(res)
 	if err != nil {
 		return err
@@ -150,31 +150,31 @@ func (res FormGetResponse[T]) Write(w http.ResponseWriter) error {
 	return err
 }
 
-type FormSaveRequest[T any] struct {
+type SaveFormRequest[T any] struct {
 	Action string `json:"action"`
 	Name   string `json:"name"`
 	RecID  int    `json:"recid"`
 	Record T      `json:"record"`
 }
 
-func ParseFormSaveRequest[T any](body io.Reader) (FormSaveRequest[T], error) {
-	var req FormSaveRequest[T]
+func ParseSaveFormRequest[T any](body io.Reader) (SaveFormRequest[T], error) {
+	var req SaveFormRequest[T]
 	return req, json.NewDecoder(body).Decode(&req)
 }
 
-type FormSaveResponse struct {
+type SaveFormResponse struct {
 	Status Status `json:"status"`
 	RecID  int    `json:"recid,omitempty"`
 }
 
-func NewFormSaveResponse(recID int) FormSaveResponse {
-	return FormSaveResponse{
+func NewSaveFormResponse(recID int) SaveFormResponse {
+	return SaveFormResponse{
 		Status: StatusSuccess,
 		RecID:  recID,
 	}
 }
 
-func (res FormSaveResponse) Write(w http.ResponseWriter) error {
+func (res SaveFormResponse) Write(w http.ResponseWriter) error {
 	data, err := json.Marshal(res)
 	if err != nil {
 		return err

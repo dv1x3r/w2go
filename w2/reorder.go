@@ -5,18 +5,18 @@ import (
 	"io"
 )
 
-type GridReorderRequest struct {
+type ReorderGridRequest struct {
 	RecID      int
 	MoveBefore int
 	Bottom     bool
 }
 
-func ParseGridReorderRequest(body io.Reader) (GridReorderRequest, error) {
-	var req GridReorderRequest
+func ParseReorderGridRequest(body io.Reader) (ReorderGridRequest, error) {
+	var req ReorderGridRequest
 	return req, json.NewDecoder(body).Decode(&req)
 }
 
-func (req GridReorderRequest) MarshalJSON() ([]byte, error) {
+func (req ReorderGridRequest) MarshalJSON() ([]byte, error) {
 	v := struct {
 		RecID      int `json:"recid"`
 		MoveBefore any `json:"moveBefore"`
@@ -33,7 +33,7 @@ func (req GridReorderRequest) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v)
 }
 
-func (req *GridReorderRequest) UnmarshalJSON(data []byte) error {
+func (req *ReorderGridRequest) UnmarshalJSON(data []byte) error {
 	if string(data) == "null" || string(data) == `""` {
 		return nil
 	}
@@ -56,18 +56,18 @@ func (req *GridReorderRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type GridReorderManyRequest struct {
+type ReorderManyGridRequest struct {
 	RecID      []int
 	MoveBefore int
 	Bottom     bool
 }
 
-func ParseGridReorderManyRequest(body io.Reader) (GridReorderManyRequest, error) {
-	var req GridReorderManyRequest
+func ParseReorderManyGridRequest(body io.Reader) (ReorderManyGridRequest, error) {
+	var req ReorderManyGridRequest
 	return req, json.NewDecoder(body).Decode(&req)
 }
 
-func (req GridReorderManyRequest) MarshalJSON() ([]byte, error) {
+func (req ReorderManyGridRequest) MarshalJSON() ([]byte, error) {
 	v := struct {
 		RecID      []int `json:"recid"`
 		MoveBefore any   `json:"moveBefore"`
@@ -84,7 +84,7 @@ func (req GridReorderManyRequest) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v)
 }
 
-func (req *GridReorderManyRequest) UnmarshalJSON(data []byte) error {
+func (req *ReorderManyGridRequest) UnmarshalJSON(data []byte) error {
 	if string(data) == "null" || string(data) == `""` {
 		return nil
 	}

@@ -25,43 +25,43 @@ func NewField[T any](value T) Field[T] {
 
 // IsZero implements the json.Zeroed interface.
 // Ensures proper marshalling of Field values, skipping non-provided values with omitzero tag.
-func (e Field[T]) IsZero() bool {
-	return !e.Provided
+func (f Field[T]) IsZero() bool {
+	return !f.Provided
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
 // Ensures proper unmarshalling of JSON data, setting the Valid flag based on the JSON data.
-func (e *Field[T]) UnmarshalJSON(data []byte) error {
-	e.Provided = true
+func (f *Field[T]) UnmarshalJSON(data []byte) error {
+	f.Provided = true
 
 	// w2grid inline edit sends empty string for blank fields
 	if string(data) == "null" || string(data) == `""` {
-		e.Valid = false
+		f.Valid = false
 		return nil
 	}
 
-	err := json.Unmarshal(data, &e.V)
-	e.Valid = err == nil
+	err := json.Unmarshal(data, &f.V)
+	f.Valid = err == nil
 	return err
 }
 
 // MarshalJSON implements the json.Marshaler interface.
 // Ensures proper marshalling of Field values, representing unset values as null.
-func (e Field[T]) MarshalJSON() ([]byte, error) {
-	if !e.Valid {
+func (f Field[T]) MarshalJSON() ([]byte, error) {
+	if !f.Valid {
 		return []byte("null"), nil
 	}
-	return json.Marshal(e.V)
+	return json.Marshal(f.V)
 }
 
 // Scan implements the sql.Scanner interface for Field.
 // Ensures that Provided flag is set.
-func (e *Field[T]) Scan(value any) error {
-	e.Provided = true
-	return e.Null.Scan(value)
+func (f *Field[T]) Scan(value any) error {
+	f.Provided = true
+	return f.Null.Scan(value)
 }
 
 // Value implements the driver.Valuer interface for Field.
-func (e Field[T]) Value() (driver.Value, error) {
-	return e.Null.Value()
+func (f Field[T]) Value() (driver.Value, error) {
+	return f.Null.Value()
 }
