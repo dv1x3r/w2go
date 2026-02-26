@@ -80,7 +80,7 @@ func main() {
 	router := http.NewServeMux()
 
 	router.Handle("GET /{$}", http.FileServerFS(htmlFS))
-	router.Handle("/lib/", http.StripPrefix("/lib/", w2ui.FileServerFS()))
+	router.Handle("GET /lib/", http.StripPrefix("/lib/", w2ui.FileServerFS()))
 
 	v1 := http.NewServeMux()
 
