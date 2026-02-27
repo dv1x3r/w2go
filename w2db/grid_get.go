@@ -23,21 +23,21 @@ type GetGridOptions[T any] struct {
 	Scan           func(rows *sql.Rows) (T, error)
 }
 
-func GetGrid[T any](db QueryDB, req w2.GetGridRequest, opts GetGridOptions[T]) (w2.GetGridResponse[T, any], error) {
+func GetGrid[T any](db QueryDB, req w2.GetGridRequest, opts GetGridOptions[T]) (w2.GetGridResponse[T], error) {
 	return GetGridContext(context.Background(), db, req, opts)
 }
 
-func GetGridContext[T any](ctx context.Context, db QueryDB, req w2.GetGridRequest, opts GetGridOptions[T]) (w2.GetGridResponse[T, any], error) {
+func GetGridContext[T any](ctx context.Context, db QueryDB, req w2.GetGridRequest, opts GetGridOptions[T]) (w2.GetGridResponse[T], error) {
 	if opts.From == "" {
-		return w2.GetGridResponse[T, any]{}, errors.New("opts.From is required")
+		return w2.GetGridResponse[T]{}, errors.New("opts.From is required")
 	}
 
 	if len(opts.Select) == 0 {
-		return w2.GetGridResponse[T, any]{}, errors.New("opts.Select is required")
+		return w2.GetGridResponse[T]{}, errors.New("opts.Select is required")
 	}
 
 	if opts.Scan == nil {
-		return w2.GetGridResponse[T, any]{}, errors.New("opts.Scan is required")
+		return w2.GetGridResponse[T]{}, errors.New("opts.Scan is required")
 	}
 
 	countExpr := opts.CountExpr
@@ -66,7 +66,7 @@ func GetGridContext[T any](ctx context.Context, db QueryDB, req w2.GetGridReques
 	if errors.Is(err, sql.ErrNoRows) {
 		return w2.NewGetGridResponse(records, 0), nil
 	} else if err != nil {
-		return w2.GetGridResponse[T, any]{}, err
+		return w2.GetGridResponse[T]{}, err
 	}
 
 	dataBuilder := sqlbuilder.Select(opts.Select...).From(opts.From)
@@ -85,20 +85,20 @@ func GetGridContext[T any](ctx context.Context, db QueryDB, req w2.GetGridReques
 	query, args = dataBuilder.BuildWithFlavor(flavor)
 	rows, err := db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return w2.GetGridResponse[T, any]{}, err
+		return w2.GetGridResponse[T]{}, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		record, err := opts.Scan(rows)
 		if err != nil {
-			return w2.GetGridResponse[T, any]{}, fmt.Errorf("scan: %w", err)
+			return w2.GetGridResponse[T]{}, fmt.Errorf("scan: %w", err)
 		}
 		records = append(records, record)
 	}
 
 	if err := rows.Err(); err != nil {
-		return w2.GetGridResponse[T, any]{}, err
+		return w2.GetGridResponse[T]{}, err
 	}
 
 	return w2.NewGetGridResponse(records, total), nil

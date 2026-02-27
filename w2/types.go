@@ -63,23 +63,23 @@ func ParseGetGridRequest(request string) (GetGridRequest, error) {
 	return req, json.Unmarshal([]byte(request), &req)
 }
 
-type GetGridResponse[T any, V any] struct {
+type GetGridResponse[T any] struct {
 	Status  Status `json:"status"`
 	Records []T    `json:"records,omitempty"`
-	Summary []V    `json:"summary,omitempty"`
+	Summary []T    `json:"summary,omitempty"`
 	Total   int    `json:"total,omitempty"`
 }
 
-func NewGetGridResponse[T any](records []T, total int) GetGridResponse[T, any] {
-	return GetGridResponse[T, any]{
+func NewGetGridResponse[T any](records []T, total int) GetGridResponse[T] {
+	return GetGridResponse[T]{
 		Status:  StatusSuccess,
 		Records: records,
 		Total:   total,
 	}
 }
 
-func NewGetGridResponseWithSummary[T any, V any](records []T, summary []V, total int) GetGridResponse[T, V] {
-	return GetGridResponse[T, V]{
+func NewGetGridResponseWithSummary[T any](records []T, summary []T, total int) GetGridResponse[T] {
+	return GetGridResponse[T]{
 		Status:  StatusSuccess,
 		Records: records,
 		Summary: summary,
@@ -87,7 +87,7 @@ func NewGetGridResponseWithSummary[T any, V any](records []T, summary []V, total
 	}
 }
 
-func (res GetGridResponse[T, V]) Write(w http.ResponseWriter) error {
+func (res GetGridResponse[T]) Write(w http.ResponseWriter) error {
 	data, err := json.Marshal(res)
 	if err != nil {
 		return err
