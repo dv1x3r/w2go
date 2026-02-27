@@ -26,7 +26,7 @@ go get github.com/dv1x3r/w2go
 |---------|-------------|
 | `w2` | Core types, request parsers, and response writers |
 | `w2sql` | Translates w2ui requests into SQL (filters, sorters, limits, updates) using `go-sqlbuilder` |
-| `w2db` | High-level CRUD helpers - wraps `w2sql` and executes queries against a `*sql.DB` or `*sql.Tx` |
+| `w2db` | High-level CRUD helpers that wrap `w2sql` and execute queries against a `*sql.DB` or `*sql.Tx` |
 | `w2sort` | In-memory slice reordering for drag-and-drop support |
 | `w2ui` | Embedded w2ui JS/CSS assets served via `embed.FS` |
 
@@ -157,7 +157,7 @@ for _, change := range req.Changes {
 
 ### w2db - database helpers
 
-`w2db` eliminates the boilerplate of building queries and scanning rows. Each function accepts a `*sql.DB`, `*sql.Tx`, or any value that satisfies the `QueryDB` / `ExecDB` / `QueryExecDB` interface.
+`w2db` eliminates the boilerplate of building queries and scanning rows. Each function accepts a `*sql.DB`, `*sql.Tx`, or any value that satisfies the `QueryDB` / `ExecDB` / `QueryExecDB` interface. Every function also has a `Context` variant (e.g. `w2db.GetGridContext`) that accepts a `context.Context` as the first argument.
 
 **w2grid**
 
@@ -238,6 +238,35 @@ res, err := w2db.GetDropdown(db, req, w2db.GetDropdownOptions{
     IDField:      "id",
     TextField:    "name",
     OrderByField: "position",
+})
+```
+
+**Transactions**
+
+`w2db.WithinTransaction` handles begin, commit, and rollback so you don't have to. Pass the `*sql.Tx` directly into any `w2db` function:
+
+```go
+// SaveGrid loops over all changes - wrap in a transaction so the batch is atomic
+err := w2db.WithinTransaction(db, func(tx *sql.Tx) error {
+    _, err := w2db.SaveGrid(tx, req, w2db.SaveGridOptions[Todo]{
+        BuildUpdate: func(change Todo) *sqlbuilder.UpdateBuilder {
+            ub := sqlbuilder.Update("todo")
+            ub.Where(ub.EQ("id", change.ID))
+            w2sql.Set(ub, change.Quantity, "quantity")
+            return ub
+        },
+    })
+    return err
+})
+
+// ReorderGrid issues one UPDATE per row - wrap in a transaction for consistency
+err := w2db.WithinTransaction(db, func(tx *sql.Tx) error {
+    _, err := w2db.ReorderGrid(tx, req, w2db.ReorderGridOptions{
+        Update:   "todo",
+        IDField:  "id",
+        SetField: "position",
+    })
+    return err
 })
 ```
 
