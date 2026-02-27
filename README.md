@@ -8,9 +8,9 @@ Handles request parsing, response serialization, SQL query building, and databas
 - [Packages](#packages)
 - [Usage](#usage)
   - [Parsing requests and writing responses](#parsing-requests-and-writing-responses)
-  - [w2sql - SQL builder integration](#w2sql--sql-builder-integration)
-  - [w2db - database helpers](#w2db--database-helpers)
-  - [w2sort - array reordering](#w2sort--array-reordering)
+  - [w2sql - SQL builder integration](#w2sql-sql-builder-integration)
+  - [w2db - database helpers](#w2db-database-helpers)
+  - [w2sort - array reordering](#w2sort-array-reordering)
 - [Examples](#examples)
 - [License](#license)
 
