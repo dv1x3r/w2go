@@ -8,9 +8,9 @@ Handles request parsing, response serialization, SQL query building, and databas
 - [Packages](#packages)
 - [Usage](#usage)
   - [Parsing requests and writing responses](#parsing-requests-and-writing-responses)
-  - [w2sql - SQL builder integration](#w2sql-sql-builder-integration)
-  - [w2db - database helpers](#w2db-database-helpers)
-  - [w2sort - array reordering](#w2sort-array-reordering)
+  - [w2sql SQL builder integration](#w2sql-sql-builder-integration)
+  - [w2db database helpers](#w2db-database-helpers)
+  - [w2sort array reordering](#w2sort-array-reordering)
 - [Examples](#examples)
 - [License](#license)
 
@@ -118,7 +118,7 @@ type Todo struct {
 }
 ```
 
-### w2sql - SQL builder integration
+### w2sql SQL builder integration
 
 `w2sql` translates w2ui request data into SQL clauses using [`go-sqlbuilder`](https://github.com/huandu/go-sqlbuilder). Field names are mapped through a whitelist to prevent injection.
 
@@ -155,7 +155,7 @@ for _, change := range req.Changes {
 }
 ```
 
-### w2db - database helpers
+### w2db database helpers
 
 `w2db` eliminates the boilerplate of building queries and scanning rows. Each function accepts a `*sql.DB`, `*sql.Tx`, or any value that satisfies the `QueryDB` / `ExecDB` / `QueryExecDB` interface. Every function also has a `Context` variant (e.g. `w2db.GetGridContext`) that accepts a `context.Context` as the first argument.
 
@@ -270,7 +270,7 @@ err := w2db.WithinTransaction(db, func(tx *sql.Tx) error {
 })
 ```
 
-### w2sort - array reordering
+### w2sort array reordering
 
 `w2sort.ReorderArray` applies a drag-and-drop reorder request to a slice of IDs in memory.
 
