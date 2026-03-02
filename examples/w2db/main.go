@@ -11,6 +11,7 @@ import (
 	"github.com/dv1x3r/w2go/w2db"
 	"github.com/dv1x3r/w2go/w2sql"
 	"github.com/dv1x3r/w2go/w2ui"
+	"github.com/dv1x3r/w2go/w2widget"
 
 	"github.com/huandu/go-sqlbuilder"
 	_ "modernc.org/sqlite"
@@ -94,6 +95,9 @@ func main() {
 	v1.HandleFunc("GET /status/dropdown", getStatusDropdown)
 	v1.HandleFunc("GET /status/grid/records", getStatusGridRecords)
 	v1.HandleFunc("POST /status/grid/reorder", postStatusGridReorder)
+
+	v1.HandleFunc("POST /sql/execute", w2widget.SQLExplorerExecHTTPHandler(db))
+	v1.HandleFunc("GET /sql/schema", w2widget.SQLExplorerSchemaHTTPHandler(db))
 
 	router.Handle("/api/v1/", http.StripPrefix("/api/v1", v1))
 

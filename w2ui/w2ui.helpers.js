@@ -27,7 +27,7 @@ export function w2init() {
 }
 
 export async function w2fetch(opts = {}) {
-  const { owner, reload, lock, url, method, headers, body, timeout = 5000 } = opts
+  const { owner, reload, lock, url, method, headers, body, signal, timeout = 5000 } = opts
   if (owner && lock) {
     owner.lock({ spinner: true, msg: lock })
   }
@@ -36,6 +36,7 @@ export async function w2fetch(opts = {}) {
       method: method,
       headers: headers,
       body: body,
+      signal: signal,
     })
     if (!res.ok) {
       const err = await res.json().catch(() => {
@@ -50,6 +51,7 @@ export async function w2fetch(opts = {}) {
     if (owner && reload) {
       owner.reload()
     }
+    return result
   }
   catch (err) {
     if (owner) {

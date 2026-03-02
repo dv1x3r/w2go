@@ -5,6 +5,9 @@
   <title>w2go example</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" type="text/css" href="/lib/w2ui.min.css">
   <style>
     * {
@@ -19,6 +22,7 @@
   <script type="module">
     import {w2form, w2grid, w2popup} from '/lib/w2ui.es6.min.js'
     import {w2init, w2fetch, remoteListOptions, reloadOnSuccess, doubleClickNonEditable} from '/lib/w2ui.helpers.js'
+    import {createSqlExplorerLayout} from '/lib/w2ui.widgets.js'
 
     // set window.w2ui and window.w2tooltip
     // set w2utils.settings.dataType = 'JSON'
@@ -104,7 +108,35 @@
             type: 'button',
             text: 'Status Enum',
             icon: 'w2ui-icon-settings',
-            onClick: () => openStatusPopup(),
+            onClick: () => {
+              const statusGrid = createStatusGrid()
+              w2popup.open({
+                title: 'Status Enum',
+                body: '<div id="status-grid" style="width: 100%; height: 100%;"></div>',
+                width: 500, height: 350, showMax: true, resizable: true,
+              })
+                .then(() => statusGrid.render('#status-grid'))
+                .close(() => statusGrid.destroy())
+            },
+          },
+          {
+            id: 'explorer',
+            type: 'button',
+            text: 'SQL Explorer',
+            icon: 'fa fa-database',
+            onClick: () => {
+              const sqlExplorer = createSqlExplorerLayout({
+                schema: '/api/v1/sql/schema',
+                execute: '/api/v1/sql/execute',
+              })
+              w2popup.open({
+                title: 'SQL Explorer',
+                body: '<div id="sql-explorer-layout" style="width: 100%; height: 100%;"></div>',
+                width: 1200, height: 600, showMax: true, resizable: true,
+              })
+                .then(() => sqlExplorer.render('#sql-explorer-layout'))
+                .close(() => sqlExplorer.destroy())
+            },
           },
         ],
       },
@@ -193,8 +225,8 @@
         .close(() => todoForm.destroy())
     }
 
-    function openStatusPopup() {
-      const statusGrid = new w2grid({
+    function createStatusGrid() {
+      return new w2grid({
         name: 'statusGrid',
         url: '/api/v1/status/grid/records',
         recid: 'id',
@@ -227,14 +259,6 @@
           })
         },
       })
-
-      w2popup.open({
-        title: 'Status Enum',
-        body: '<div id="status-grid" style="width: 100%; height: 100%;"></div>',
-        width: 500, height: 350, showMax: true, resizable: true,
-      })
-        .then(() => statusGrid.render('#status-grid'))
-        .close(() => statusGrid.destroy())
     }
   </script>
 </body>
