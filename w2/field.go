@@ -36,6 +36,8 @@ func (f *Field[T]) UnmarshalJSON(data []byte) error {
 
 	// w2grid inline edit sends empty string for blank fields
 	if string(data) == "null" || string(data) == `""` {
+		var zero T
+		f.V = zero
 		f.Valid = false
 		return nil
 	}
