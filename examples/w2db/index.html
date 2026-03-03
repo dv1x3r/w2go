@@ -39,6 +39,46 @@
       },
       recid: 'id',
       multiSearch: true,
+      toolbar: {
+        items: [
+          {type: 'break'},
+          {
+            id: 'status',
+            type: 'button',
+            text: 'Status Enum',
+            icon: 'w2ui-icon-settings',
+            onClick: () => {
+              const statusGrid = createStatusGrid()
+              w2popup.open({
+                title: 'Status Enum',
+                body: '<div id="status-grid" style="width: 100%; height: 100%;"></div>',
+                width: 500, height: 350, showMax: true, resizable: true,
+              })
+                .then(() => statusGrid.render('#status-grid'))
+                .close(() => statusGrid.destroy())
+            },
+          },
+          {
+            id: 'explorer',
+            type: 'button',
+            text: 'SQL Explorer',
+            icon: 'fa fa-database',
+            onClick: () => {
+              const sqlExplorer = createSqlExplorerLayout({
+                schema: '/api/v1/sql/schema',
+                execute: '/api/v1/sql/execute',
+              })
+              w2popup.open({
+                title: 'SQL Explorer',
+                body: '<div id="sql-explorer-layout" style="width: 100%; height: 100%;"></div>',
+                width: 1200, height: 600, showMax: true, resizable: true,
+              })
+                .then(() => sqlExplorer.render('#sql-explorer-layout'))
+                .close(() => sqlExplorer.destroy())
+            },
+          },
+        ],
+      },
       show: {
         footer: true,
         toolbar: true,
@@ -100,46 +140,6 @@
       sortData: [
         {field: 'id', direction: 'asc'},
       ],
-      toolbar: {
-        items: [
-          {type: 'break'},
-          {
-            id: 'status',
-            type: 'button',
-            text: 'Status Enum',
-            icon: 'w2ui-icon-settings',
-            onClick: () => {
-              const statusGrid = createStatusGrid()
-              w2popup.open({
-                title: 'Status Enum',
-                body: '<div id="status-grid" style="width: 100%; height: 100%;"></div>',
-                width: 500, height: 350, showMax: true, resizable: true,
-              })
-                .then(() => statusGrid.render('#status-grid'))
-                .close(() => statusGrid.destroy())
-            },
-          },
-          {
-            id: 'explorer',
-            type: 'button',
-            text: 'SQL Explorer',
-            icon: 'fa fa-database',
-            onClick: () => {
-              const sqlExplorer = createSqlExplorerLayout({
-                schema: '/api/v1/sql/schema',
-                execute: '/api/v1/sql/execute',
-              })
-              w2popup.open({
-                title: 'SQL Explorer',
-                body: '<div id="sql-explorer-layout" style="width: 100%; height: 100%;"></div>',
-                width: 1200, height: 600, showMax: true, resizable: true,
-              })
-                .then(() => sqlExplorer.render('#sql-explorer-layout'))
-                .close(() => sqlExplorer.destroy())
-            },
-          },
-        ],
-      },
       onAdd: function (event) {openTodoPopup(event)},
       onEdit: function (event) {openTodoPopup(event)},
       onSave: function (event) {reloadOnSuccess(event)},
