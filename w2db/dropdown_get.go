@@ -44,7 +44,7 @@ func GetDropdownContext(ctx context.Context, db QueryDB, req w2.GetDropdownReque
 	}
 
 	builder := sqlbuilder.Select(opts.IDField, opts.TextField).From(opts.From)
-	builder.Where(builder.Like(opts.TextField, fmt.Sprintf("%%%s%%", req.Search)))
+	builder.Where(builder.Like(opts.TextField, "%"+req.Search+"%"))
 	builder.OrderBy(opts.OrderByField)
 	builder.Limit(req.Max)
 

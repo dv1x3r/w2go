@@ -89,6 +89,12 @@ func GetGridContext[T any](ctx context.Context, db QueryDB, req w2.GetGridReques
 	}
 	defer rows.Close()
 
+	capacity := total
+	if req.Limit > 0 {
+		capacity = min(total, req.Limit)
+	}
+	records = make([]T, 0, capacity)
+
 	for rows.Next() {
 		record, err := opts.Scan(rows)
 		if err != nil {
