@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/dv1x3r/w2go/w2"
 )
@@ -76,6 +78,10 @@ func SQLExecHTTPHandler(db *sql.DB) http.HandlerFunc {
 }
 
 func SQLExecQuery(ctx context.Context, db *sql.DB, query string) (SQLExecResult, error) {
+	if strings.TrimSpace(query) == "" {
+		return SQLExecResult{}, errors.New("query is empty")
+	}
+
 	rows, err := db.QueryContext(ctx, query)
 	if err != nil {
 		return SQLExecResult{}, err
