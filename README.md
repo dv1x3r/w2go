@@ -10,6 +10,8 @@ Handles request parsing, response serialization, SQL query building, and databas
   - [Parsing requests and writing responses](#parsing-requests-and-writing-responses)
   - [w2sql SQL builder integration](#w2sql-sql-builder-integration)
   - [w2db database helpers](#w2db-database-helpers)
+  - [w2widget built-in widgets](#w2widget-built-in-widgets)
+  - [w2file file uploads](#w2file-file-uploads)
   - [w2sort array reordering](#w2sort-array-reordering)
 - [Examples](#examples)
 - [License](#license)
@@ -22,13 +24,15 @@ go get github.com/dv1x3r/w2go
 
 ## Packages
 
-| Package | Description |
-|---------|-------------|
-| `w2` | Core types, request parsers, and response writers |
-| `w2sql` | Translates w2ui requests into SQL (filters, sorters, limits, updates) using `go-sqlbuilder` |
-| `w2db` | High-level CRUD helpers that wrap `w2sql` and execute queries against a `*sql.DB` or `*sql.Tx` |
-| `w2sort` | In-memory slice reordering for drag-and-drop support |
-| `w2ui` | Embedded w2ui JS/CSS assets served via `embed.FS` |
+| Package    | Description                                                                                 |
+| ---------- | ------------------------------------------------------------------------------------------- |
+| `w2`       | Core types, request parsers, and response writers                                           |
+| `w2sql`    | Translates w2ui requests into SQL (filters, sorters, limits, updates) using `go-sqlbuilder` |
+| `w2db`     | High-level CRUD helpers that execute queries against a `*sql.DB` or `*sql.Tx`               |
+| `w2widget` | Pre-built HTTP handlers for common UI widgets (SQL explorer)                                |
+| `w2file`   | Multipart file upload parsing helpers                                                       |
+| `w2sort`   | In-memory slice reordering for drag-and-drop support                                        |
+| `w2ui`     | Embedded w2ui JS/CSS assets served via `embed.FS`                                           |
 
 ### Choosing between `w2sql` and `w2db`
 
@@ -174,8 +178,8 @@ res, err := w2db.GetGrid(db, req, w2db.GetGridOptions[Todo]{
     },
 })
 
-// Save inline edits
-affected, err := w2db.SaveGrid(db, req, w2db.SaveGridOptions[Todo]{
+// Save inline edits - pass a *sql.Tx to make the batch atomic
+affected, err := w2db.SaveGrid(tx, req, w2db.SaveGridOptions[Todo]{
     BuildUpdate: func(change Todo) *sqlbuilder.UpdateBuilder {
         ub := sqlbuilder.Update("todo")
         ub.Where(ub.EQ("id", change.ID))
@@ -191,9 +195,9 @@ affected, err := w2db.RemoveGrid(db, req, w2db.RemoveGridOptions{
     IDField: "id",
 })
 
-// Reorder rows by updating a position column
+// Reorder rows by updating a position column - pass a *sql.Tx for consistency
 affected, err := w2db.ReorderGrid(tx, req, w2db.ReorderGridOptions{
-    Update:   "todo",
+    Update:   "status",
     IDField:  "id",
     SetField: "position",
 })
@@ -243,7 +247,7 @@ res, err := w2db.GetDropdown(db, req, w2db.GetDropdownOptions{
 
 **Transactions**
 
-`w2db.WithinTransaction` handles begin, commit, and rollback so you don't have to. Pass the `*sql.Tx` directly into any `w2db` function:
+`w2db.WithinTransaction` handles begin, commit, and rollback. Pass the `*sql.Tx` directly into any `w2db` function since they all accept the `ExecDB` / `QueryExecDB` interface:
 
 ```go
 // SaveGrid loops over all changes - wrap in a transaction so the batch is atomic
@@ -262,12 +266,86 @@ err := w2db.WithinTransaction(db, func(tx *sql.Tx) error {
 // ReorderGrid issues one UPDATE per row - wrap in a transaction for consistency
 err := w2db.WithinTransaction(db, func(tx *sql.Tx) error {
     _, err := w2db.ReorderGrid(tx, req, w2db.ReorderGridOptions{
-        Update:   "todo",
+        Update:   "status",
         IDField:  "id",
         SetField: "position",
     })
     return err
 })
+```
+
+`WithinTransactionContext` is also available when you need to pass a `context.Context`:
+
+```go
+err := w2db.WithinTransactionContext(ctx, db, func(ctx context.Context, tx *sql.Tx) error {
+    _, err := w2db.SaveGridContext(ctx, tx, req, opts)
+    return err
+})
+```
+
+### w2widget built-in widgets
+
+`w2widget` provides ready-to-use HTTP handlers for common UI widgets.
+
+**SQL Explorer**
+
+A browser-based SQL query tool with a schema sidebar, query editor, and result grid. Useful for development and debugging.
+
+Register the two backend endpoints:
+
+```go
+v1.HandleFunc("POST /sql/execute", w2widget.SQLExecHTTPHandler(db))
+v1.HandleFunc("GET /sql/schema",   w2widget.SQLiteSchemaHTTPHandler(db))
+```
+
+Mount the frontend widget from `w2ui.widgets.js`:
+
+```js
+import { createSqlExplorerLayout } from "/lib/w2ui.widgets.js";
+
+const sqlExplorer = createSqlExplorerLayout({
+  schema: "/api/v1/sql/schema",
+  execute: "/api/v1/sql/execute",
+});
+sqlExplorer.render("#container");
+```
+
+Features:
+
+- Schema sidebar with database/table/column tree
+- Query editor with `Tab` indentation and `Alt+Enter` to execute
+- Execute selection or full query
+- Cancel in-flight queries
+- Result grid with row count and elapsed time
+
+> **Note:** `SQL Explorer` executes arbitrary SQL from the client. Do not expose it in production!
+
+If you prefer to handle the HTTP layer yourself, use the lower-level functions directly:
+
+```go
+res, err := w2widget.SQLExecQuery(ctx, db, query)
+schema, err := w2widget.SQLiteSelectSchema(ctx, db)
+```
+
+### w2file file uploads
+
+`w2file` provides helpers for parsing multipart file uploads sent by the `w2upload` helper in `w2ui.helpers.js`.
+
+```go
+// Parse files[] from a multipart/form-data request (default 32 MB limit)
+headers, err := w2file.ParseMultipartFiles(r)
+
+// Custom memory buffer and per-file size limit
+headers, err := w2file.ParseMultipartFilesWithOptions(r, w2file.ParseMultipartFilesOptions{
+    Memory:        64 << 20, // 64 MB in-memory buffer
+    MaxUploadSize: 10 << 20, // 10 MB per file limit
+})
+
+for _, h := range headers {
+    f, _ := h.Open()
+    defer f.Close()
+    // process file...
+}
 ```
 
 ### w2sort array reordering
@@ -290,9 +368,9 @@ if err := w2sort.ReorderArray(ids, req); err != nil {
 
 Two complete CRUD demos are included, both using an in-memory SQLite database:
 
-| Example | Approach |
-|---------|----------|
-| [`examples/w2db`](./examples/w2db) | Uses `w2db` helpers |
+| Example                              | Approach                                           |
+| ------------------------------------ | -------------------------------------------------- |
+| [`examples/w2db`](./examples/w2db)   | Uses `w2db` helpers, includes SQL explorer widget  |
 | [`examples/w2sql`](./examples/w2sql) | Uses `w2sql` + raw `database/sql` for full control |
 
 ```shell
@@ -302,6 +380,8 @@ go run ./examples/w2sql/main.go
 ```
 
 Open `http://localhost:3000` in your browser.
+
+Both examples cover a full todo CRUD app with inline grid editing, a form popup, a status dropdown, and drag-and-drop reordering. The `w2db` example also includes the SQL explorer widget.
 
 ## License
 

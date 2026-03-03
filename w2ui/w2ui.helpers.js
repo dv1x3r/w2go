@@ -56,6 +56,8 @@ export async function w2fetch(opts = {}) {
   catch (err) {
     if (owner) {
       owner.message(err.toString())
+    } else {
+      throw err
     }
   }
   finally {
@@ -86,14 +88,15 @@ export function w2upload(opts = {}) {
 }
 
 export function registerSidebarSearch(sidebar) {
+  // Normalize the string to ensure consistent comparison (garumzīmes)
+  const normalize = str => str?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
   return function(value) {
-    // Normalize the string to ensure consistent comparison
-    const normalizeString = str => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const search = normalize(value)
     sidebar.expandAll()
-    sidebar.search(value, (str, node) => {
-      const str1 = normalizeString(str.toLowerCase())
-      const str2 = normalizeString(node.text.toLowerCase())
-      return str2.indexOf(str1) != -1
+    sidebar.search(value, (_, node) => {
+      const text = normalize(node.text)
+      const parentText = normalize(node.parent.text)
+      return text.includes(search) || parentText?.includes(search)
     })
   }
 }

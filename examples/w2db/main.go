@@ -96,8 +96,8 @@ func main() {
 	v1.HandleFunc("GET /status/grid/records", getStatusGridRecords)
 	v1.HandleFunc("POST /status/grid/reorder", postStatusGridReorder)
 
-	v1.HandleFunc("POST /sql/execute", w2widget.SQLExplorerExecHTTPHandler(db))
-	v1.HandleFunc("GET /sql/schema", w2widget.SQLExplorerSchemaHTTPHandler(db))
+	v1.HandleFunc("POST /sql/execute", w2widget.SQLExecHTTPHandler(db))
+	v1.HandleFunc("GET /sql/schema", w2widget.SQLiteSchemaHTTPHandler(db))
 
 	router.Handle("/api/v1/", http.StripPrefix("/api/v1", v1))
 
