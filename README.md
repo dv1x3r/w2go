@@ -294,19 +294,15 @@ A browser-based SQL query tool with a schema sidebar, query editor, and result g
 Register the two backend endpoints:
 
 ```go
-v1.HandleFunc("POST /sql/execute", w2widget.SQLExecHTTPHandler(db))
-v1.HandleFunc("GET /sql/schema",   w2widget.SQLiteSchemaHTTPHandler(db))
+v1.HandleFunc("GET /sql",  w2widget.SQLiteSchemaHTTPHandler(db))
+v1.HandleFunc("POST /sql", w2widget.SQLExecHTTPHandler(db))
 ```
 
 Mount the frontend widget from `w2ui.widgets.js`:
 
 ```js
 import { createSqlExplorerLayout } from "/lib/w2ui.widgets.js";
-
-const sqlExplorer = createSqlExplorerLayout({
-  schema: "/api/v1/sql/schema",
-  execute: "/api/v1/sql/execute",
-});
+const sqlExplorer = createSqlExplorerLayout({ url: "/api/v1/sql" });
 sqlExplorer.render("#container");
 ```
 
