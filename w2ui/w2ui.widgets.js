@@ -105,7 +105,7 @@ export function createSqlExplorerLayout(opts = {}) {
     finally {
       isRunning = false
       abortController = null
-      button.text = 'Execute (Alt+Enter)'
+      button.text = 'Run'
       button.icon = 'fa fa-play'
       toolbar.refresh()
     }
@@ -124,8 +124,8 @@ export function createSqlExplorerLayout(opts = {}) {
             {
               type: 'button',
               id: 'execute',
-              text: 'Execute (Alt+Enter)',
-              tooltip: 'Alt+Enter executes selection or full query<br>Alt+Shift+Enter does the same and refreshes the sidebar schema',
+              text: 'Run',
+              tooltip: 'Shift+Enter executes selection or full query<br>Alt+Shift+Enter does the same and refreshes the sidebar schema',
               icon: 'fa fa-play',
               onClick: async function() {
                 await executeQuery()
@@ -168,10 +168,10 @@ export function createSqlExplorerLayout(opts = {}) {
           textarea.selectionStart = textarea.selectionEnd = start + 4
         } else if (e.key === 'Escape') {
           abortController?.abort()
-        } else if (e.key === 'Enter' && e.altKey) {
+        } else if (e.key === 'Enter' && e.shiftKey) {
           e.preventDefault()
           await executeQuery()
-          if (e.shiftKey) {
+          if (e.altKey) {
             await fetchSchema()
           }
         }
