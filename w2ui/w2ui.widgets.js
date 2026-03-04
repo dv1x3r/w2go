@@ -7,17 +7,17 @@ export function createSqlExplorerLayout(opts = {}) {
   const sidebar = new w2sidebar({
     name: 'sqlExplorerSidebar',
     levelPadding: 8,
-    topHTML: '<div style="margin-top:2px;padding:3px 5px;height:36px;"><input id="sqlExplorerSearch" class="w2ui-input" style="width:100%;" placeholder="Search..."></div>',
+    topHTML: '<div style="margin-top:2px;padding:3px 5px;height:36px;"><input id="sql-explorer-search" class="w2ui-input" style="width:100%;" placeholder="Search..."></div>',
     onRender: async function(event) {
       await event.complete
       const search = registerSidebarSearch(sidebar)
-      const el = document.getElementById('sqlExplorerSearch')
+      const el = document.getElementById('sql-explorer-search')
       el.addEventListener('keyup', e => search(e.target.value))
     }
   })
 
   async function fetchSchema() {
-    const el = document.getElementById('sqlExplorerSearch')
+    const el = document.getElementById('sql-explorer-search')
     if (el) {
       el.value = null
     }
@@ -77,7 +77,7 @@ export function createSqlExplorerLayout(opts = {}) {
     isRunning = true
     abortController = new AbortController()
 
-    const textarea = document.getElementById('sqlExplorerQuery')
+    const textarea = document.getElementById('sql-explorer-query')
     const selection = textarea.value.substring(textarea.selectionStart, textarea.selectionEnd)
     const query = selection || textarea.value
     const startTime = performance.now()
@@ -132,7 +132,7 @@ export function createSqlExplorerLayout(opts = {}) {
             },
           ],
         },
-        html: '<div style="padding: 5px; height:100%;"><textarea id="sqlExplorerQuery" class="w2ui-input" style="height: 100%; width: 100%; resize:none; font-family: monospace;"></textarea></div>',
+        html: '<div style="padding: 5px; height:100%;"><textarea id="sql-explorer-query" class="w2ui-input" style="height: 100%; width: 100%; resize:none; font-family: monospace;"></textarea></div>',
       },
       {
         type: 'main',
@@ -157,7 +157,7 @@ export function createSqlExplorerLayout(opts = {}) {
     onRender: async function(event) {
       await event.complete
       await fetchSchema()
-      const textarea = document.getElementById('sqlExplorerQuery')
+      const textarea = document.getElementById('sql-explorer-query')
       textarea.addEventListener('keydown', async e => {
         if (e.key === 'Tab' && !e.shiftKey) {
           e.preventDefault()
