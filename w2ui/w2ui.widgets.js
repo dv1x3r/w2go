@@ -2,7 +2,7 @@ import { w2grid, w2layout, w2sidebar } from './w2ui.es6.min.js'
 import { w2fetch, registerSidebarSearch } from './w2ui.helpers.js'
 
 export function createSqlExplorerLayout(opts = {}) {
-  const { execute, schema } = opts
+  const { url } = opts
 
   const sidebar = new w2sidebar({
     name: 'sqlExplorerSidebar',
@@ -17,7 +17,7 @@ export function createSqlExplorerLayout(opts = {}) {
   })
 
   async function fetchSchema() {
-    const result = await w2fetch({ url: schema, method: 'GET' })
+    const result = await w2fetch({ url: url, method: 'GET' })
     sidebar.nodes = result.databases.map((db, dbIndex) => ({
       id: `db-${dbIndex}`,
       text: db.name,
@@ -82,7 +82,7 @@ export function createSqlExplorerLayout(opts = {}) {
       const result = await w2fetch({
         owner: grid,
         lock: 'Executing...',
-        url: execute,
+        url: url,
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query }),
@@ -128,7 +128,7 @@ export function createSqlExplorerLayout(opts = {}) {
             },
           ],
         },
-        html: '<div style="padding: 5px; height:100%;"><textarea id="sqlExplorerQuery" class="w2ui-input" style="height: 100%; width: 100%; resize:none;"></textarea></div>',
+        html: '<div style="padding: 5px; height:100%;"><textarea id="sqlExplorerQuery" class="w2ui-input" style="height: 100%; width: 100%; resize:none; font-family: monospace;"></textarea></div>',
       },
       {
         type: 'main',

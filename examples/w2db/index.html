@@ -65,10 +65,7 @@
             text: 'SQL Explorer',
             icon: 'fa fa-database',
             onClick: () => {
-              const sqlExplorer = createSqlExplorerLayout({
-                schema: '/api/v1/sql/schema',
-                execute: '/api/v1/sql/execute',
-              })
+              const sqlExplorer = createSqlExplorerLayout({url: '/api/v1/sql'})
               w2popup.open({
                 title: 'SQL Explorer',
                 body: '<div id="sql-explorer-layout" style="width: 100%; height: 100%;"></div>',
