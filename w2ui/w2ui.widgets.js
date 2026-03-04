@@ -89,7 +89,7 @@ export function createSqlExplorerLayout(opts = {}) {
         signal: abortController.signal,
       })
       if (result) {
-        grid.columns = result.columns.map(column => ({ field: column, text: column, render: 'text', min: 100 }))
+        grid.columns = result.columns.map(column => ({ field: column, text: column, render: 'nullable', min: 100 }))
         grid.records = result.records.map((row, i) => ({ recid: i + 1, ...row }))
         grid.total = result.total
         grid.refresh()

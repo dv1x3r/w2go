@@ -6,6 +6,10 @@ export function w2init() {
   w2utils.settings.dataType = 'JSON'
   w2utils.formatters['text'] = (_, extra) => w2utils.encodeTags(String(extra.value ?? ''))
   w2utils.formatters['dropdown'] = (_, extra) => w2utils.encodeTags(String(extra.value?.text ?? ''))
+  w2utils.formatters['nullable'] = (row, extra) => {
+    const value = row[extra.field] // nullable
+    return value == null ? `<span style="font-style: italic; color: darkgrey;">NULL</span>` : w2utils.encodeTags(String(extra.value))
+  }
   w2utils.formatters['tooltip-text'] = (_, extra) => {
     const text = w2utils.encodeTags(String(extra.value ?? ''))
     const encodedBase64 = btoa(encodeURIComponent(text))
