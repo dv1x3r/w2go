@@ -69,7 +69,7 @@
               w2popup.open({
                 title: 'SQL Explorer',
                 body: '<div id="sql-explorer-layout" style="width: 100%; height: 100%;"></div>',
-                width: 1200, height: 600, showMax: true, resizable: true, keyboard: false,
+                width: 1200, height: 600, showMax: true, resizable: true,
               })
                 .then(() => sqlExplorer.render('#sql-explorer-layout'))
                 .close(() => sqlExplorer.destroy())

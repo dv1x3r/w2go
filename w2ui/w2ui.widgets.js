@@ -17,6 +17,10 @@ export function createSqlExplorerLayout(opts = {}) {
   })
 
   async function fetchSchema() {
+    const el = document.getElementById('sqlExplorerSearch')
+    if (el) {
+      el.value = null
+    }
     const result = await w2fetch({ url: url, method: 'GET' })
     sidebar.nodes = result.databases.map((db, dbIndex) => ({
       id: `db-${dbIndex}`,
@@ -36,7 +40,7 @@ export function createSqlExplorerLayout(opts = {}) {
             expanded: false,
             nodes: table.columns.map((col, colIndex) => ({
               id: `db-${dbIndex}-table-${tableIndex}-col-${colIndex}`,
-              text: `${col.name} (${col.type})`,
+              text: `${col.name}${col.type ? ` (${col.type})` : ''}`,
               icon: col.pk ? 'fa fa-key' : 'fa',
             })),
           })),
@@ -120,7 +124,7 @@ export function createSqlExplorerLayout(opts = {}) {
               type: 'button',
               id: 'execute',
               text: 'Execute (Alt+Enter)',
-              tooltip: 'Alt+Enter executes selection or full query',
+              tooltip: 'Alt+Enter executes selection or full query<br>Alt+Shift+Enter does the same and refreshes the sidebar schema',
               icon: 'fa fa-play',
               onClick: async function() {
                 await executeQuery()
@@ -155,17 +159,20 @@ export function createSqlExplorerLayout(opts = {}) {
       await fetchSchema()
       const textarea = document.getElementById('sqlExplorerQuery')
       textarea.addEventListener('keydown', async e => {
-        if (e.key === 'Tab') {
+        if (e.key === 'Tab' && !e.shiftKey) {
           e.preventDefault()
           const start = textarea.selectionStart
           const end = textarea.selectionEnd
           textarea.value = textarea.value.substring(0, start) + '    ' + textarea.value.substring(end)
           textarea.selectionStart = textarea.selectionEnd = start + 4
+        } else if (e.key === 'Escape') {
+          abortController?.abort()
         } else if (e.key === 'Enter' && e.altKey) {
           e.preventDefault()
           await executeQuery()
-        } else if (e.key === 'Escape') {
-          abortController?.abort()
+          if (e.shiftKey) {
+            await fetchSchema()
+          }
         }
       })
     },

@@ -151,35 +151,38 @@ func SQLiteSchemaHTTPHandler(db *sql.DB) http.HandlerFunc {
 func SQLiteSelectSchema(ctx context.Context, db *sql.DB) (string, error) {
 	const query = `
 SELECT json_object(
-  'databases', json_group_array(
-    json_object(
-      'name', d.[name],
-      'tables', (
-        SELECT json_group_array(
-          json_object(
-            'name', t.[name],
-            'columns', (
-              SELECT json_group_array(
-                json_object(
-                  'name', col.[name],
-                  'type', col.[type],
-                  'notnull', col.[notnull],
-                  'default', col.[dflt_value],
-                  'pk', col.[pk]
+  'databases', (
+    SELECT json_group_array(
+      json_object(
+        'name', db.[name],
+        'tables', (
+          SELECT json_group_array(
+            json_object(
+              'name', t.[name],
+              'type', t.[type],
+              'columns', (
+                SELECT json_group_array(
+                  json_object(
+                    'name', col.[name],
+                    'type', col.[type],
+                    'notnull', col.[notnull],
+                    'default', col.[dflt_value],
+                    'pk', col.[pk]
+                  )
                 )
+                FROM pragma_table_info(t.[name]) col
               )
-              FROM pragma_table_info(t.[name]) col
             )
           )
+          FROM pragma_table_list t
+          WHERE t.[schema] = db.[name]
+            AND t.[name] NOT LIKE 'sqlite_%'
         )
-        FROM sqlite_master t
-        WHERE t.type = 'table'
-          AND t.name NOT LIKE 'sqlite_%'
       )
     )
+    FROM pragma_database_list db
   )
 ) AS [schema]
-FROM pragma_database_list d
 		`
 
 	var schema string
