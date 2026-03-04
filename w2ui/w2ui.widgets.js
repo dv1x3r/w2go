@@ -64,7 +64,7 @@ export function createSqlExplorerLayout(opts = {}) {
       return
     }
 
-    const toolbar = layout.get('main').toolbar
+    const toolbar = layout.get('top').toolbar
     const button = toolbar.items[0]
     button.text = 'Cancel (Escape)'
     button.icon = 'fa fa-stop'
@@ -107,17 +107,13 @@ export function createSqlExplorerLayout(opts = {}) {
   }
 
   const layout = new w2layout({
-    name: 'sqlExplorerLayout',
+    name: 'sqlExplorerInnerLayout',
     panels: [
       {
-        type: 'left',
+        type: 'top',
         size: 200,
-        resizable: true,
-        html: sidebar,
-      },
-      {
-        type: 'main',
         style: 'border-left: 1px solid #efefef;',
+        resizable: true,
         toolbar: {
           items: [
             {
@@ -135,11 +131,24 @@ export function createSqlExplorerLayout(opts = {}) {
         html: '<div style="padding: 5px; height:100%;"><textarea id="sqlExplorerQuery" class="w2ui-input" style="height: 100%; width: 100%; resize:none;"></textarea></div>',
       },
       {
-        type: 'right',
-        size: -350,
-        resizable: true,
+        type: 'main',
         html: grid,
       }
+    ],
+  })
+
+  return new w2layout({
+    name: 'sqlExplorerLayout',
+    panels: [
+      {
+        type: 'left',
+        size: 200,
+        html: sidebar,
+      },
+      {
+        type: 'main',
+        html: layout,
+      },
     ],
     onRender: async function(event) {
       await event.complete
@@ -162,11 +171,10 @@ export function createSqlExplorerLayout(opts = {}) {
     },
     onDestroy: function() {
       abortController?.abort()
-      sidebar.destroy()
+      layout.destroy()
       grid.destroy()
+      sidebar.destroy()
     }
   })
-
-  return layout
 }
 
