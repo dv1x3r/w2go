@@ -125,7 +125,7 @@ export function createSqlExplorerLayout(opts = {}) {
     panels: [
       {
         type: 'top',
-        size: 200,
+        size: '40%',
         resizable: true,
         toolbar: {
           items: [
