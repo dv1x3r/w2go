@@ -178,9 +178,13 @@ SELECT json_object(
               )
             )
           )
-          FROM pragma_table_list t
-          WHERE t.[schema] = db.[name]
-            AND t.[name] NOT LIKE 'sqlite_%'
+          FROM (
+            SELECT [name], [type]
+            FROM pragma_table_list
+            WHERE [schema] = db.[name]
+              AND [name] NOT LIKE 'sqlite_%'
+            ORDER BY [name]
+          ) t
         )
       )
     )
