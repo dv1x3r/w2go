@@ -93,6 +93,10 @@ func SQLExecQuery(ctx context.Context, db *sql.DB, query string) (SQLExecResult,
 		return SQLExecResult{}, err
 	}
 
+	if columns == nil {
+		columns = []string{}
+	}
+
 	records := []map[string]any{}
 
 	for rows.Next() {
