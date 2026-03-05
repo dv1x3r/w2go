@@ -84,7 +84,7 @@ export function createSqlExplorerLayout(opts = {}) {
     isRunning = true
     abortController = new AbortController()
 
-    const toolbar = editorLayout.get('top').toolbar
+    const toolbar = editorLayout.get('main').toolbar
     toolbar.disable('run')
     toolbar.enable('cancel')
 
@@ -127,9 +127,12 @@ export function createSqlExplorerLayout(opts = {}) {
     name: 'sqlEditorLayout',
     panels: [
       {
-        type: 'top',
-        size: '35%',
-        resizable: true,
+        type: 'left',
+        size: 240,
+        html: sidebar,
+      },
+      {
+        type: 'main',
         toolbar: {
           items: [
             {
@@ -169,10 +172,6 @@ export function createSqlExplorerLayout(opts = {}) {
         },
         html: `<style>.CodeMirror-hints{ z-index: 9999 !important; }</style><div id="sql-explorer-editor" style="height:100%;"></div>`,
       },
-      {
-        type: 'main',
-        html: grid,
-      }
     ],
     onRender: async function(event) {
       await event.complete
@@ -203,6 +202,9 @@ export function createSqlExplorerLayout(opts = {}) {
         },
       })
       editor.setSize('100%', '100%')
+      const schema = await w2fetch({ url: url, method: 'GET' })
+      setSchemaSidebar(schema)
+      setSchemaAutocomplete(schema)
     }
   })
 
@@ -210,21 +212,16 @@ export function createSqlExplorerLayout(opts = {}) {
     name: 'sqlExplorerLayout',
     panels: [
       {
-        type: 'left',
-        size: 200,
-        html: sidebar,
+        type: 'top',
+        size: '40%',
+        resizable: true,
+        html: editorLayout,
       },
       {
         type: 'main',
-        html: editorLayout,
+        html: grid,
       },
     ],
-    onRender: async function(event) {
-      await event.complete
-      const schema = await w2fetch({ url: url, method: 'GET' })
-      setSchemaSidebar(schema)
-      setSchemaAutocomplete(schema)
-    },
     onDestroy: function() {
       abortController?.abort()
       editorLayout.destroy()
