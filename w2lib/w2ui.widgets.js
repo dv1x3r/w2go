@@ -102,6 +102,7 @@ export function createSqlExplorerLayout(opts = {}) {
         signal: abortController.signal,
       })
       if (result) {
+        grid.lock({ spinner: true, msg: 'Processing...' })
         grid.columns = result.columns.map(column => ({ field: column, text: column, render: 'nullable', min: 80, sortable: true, editable: {} }))
         grid.records = result.records.map((row, i) => ({ recid: i + 1, ...row }))
         grid.total = result.total
@@ -109,6 +110,7 @@ export function createSqlExplorerLayout(opts = {}) {
         // grid.refresh()
         grid.reset()
         grid.columnAutoSize()
+        grid.unlock()
       }
       const elapsed = ((performance.now() - startTime) / 1000).toFixed(3)
       grid.status(`Query Executed ${elapsed} seconds`)
