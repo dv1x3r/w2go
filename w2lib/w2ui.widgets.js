@@ -101,11 +101,12 @@ export function createSqlExplorerLayout(opts = {}) {
         signal: abortController.signal,
       })
       if (result) {
-        grid.columns = result.columns.map(column => ({ field: column, text: column, render: 'nullable', min: 100, sortable: true, editable: {} }))
+        grid.columns = result.columns.map(column => ({ field: column, text: column, render: 'nullable', sortable: true, editable: {} }))
         grid.records = result.records.map((row, i) => ({ recid: i + 1, ...row }))
         grid.total = result.total
         grid.sortData = []
         grid.refresh()
+        grid.columnAutoSize()
       }
       const elapsed = ((performance.now() - startTime) / 1000).toFixed(3)
       grid.status(`Query Executed ${elapsed} seconds`)
