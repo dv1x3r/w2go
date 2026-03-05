@@ -10,6 +10,7 @@ export function createSqlExplorerLayout(opts = {}) {
 
   const grid = new w2grid({
     name: 'sqlExplorerGrid',
+    selectType: 'cell',
     recordHeight: 28,
     show: {
       footer: true,
@@ -103,12 +104,18 @@ export function createSqlExplorerLayout(opts = {}) {
       })
       if (result) {
         grid.lock({ spinner: true, msg: 'Processing...' })
-        grid.columns = result.columns.map(column => ({ field: column, text: column, render: 'nullable', min: 80, sortable: true, editable: {} }))
-        grid.records = result.records.map((row, i) => ({ recid: i + 1, ...row }))
+        grid.columns = result.columns
+          .filter(col => col.toLowerCase() !== 'recid')
+          .map(col => ({ field: col, text: col, render: 'nullable', min: 80, sortable: true, editable: {} }))
+        grid.records = result.records.map((row, i) => {
+          const { recid, ...rest } = row;
+          return { recid: i + 1, ...rest };
+        })
         grid.total = result.total
         grid.sortData = []
         // grid.refresh()
         grid.reset()
+        grid.selectNone()
         grid.columnAutoSize()
         grid.unlock()
       }
