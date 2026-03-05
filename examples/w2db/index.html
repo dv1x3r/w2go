@@ -5,10 +5,15 @@
   <title>w2go example</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
-    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
-    crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" type="text/css" href="/lib/w2ui.min.css">
+  <link rel="stylesheet" type="text/css" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" type="text/css" href="/lib/codemirror/codemirror.min.css">
+  <link rel="stylesheet" type="text/css" href="/lib/codemirror/addon/hint/show-hint.min.css">
+  <script defer src="/lib/codemirror/codemirror.min.js"></script>
+  <script defer src="/lib/codemirror/keymap/vim.min.js"></script>
+  <script defer src="/lib/codemirror/mode/sql/sql.min.js"></script>
+  <script defer src="/lib/codemirror/addon/hint/show-hint.min.js"></script>
+  <script defer src="/lib/codemirror/addon/hint/sql-hint.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -69,7 +74,7 @@
               w2popup.open({
                 title: 'SQL Explorer',
                 body: '<div id="sql-explorer-layout" style="width: 100%; height: 100%;"></div>',
-                width: 1200, height: 600, showMax: true, resizable: true,
+                width: 1200, height: 600, showMax: true, resizable: true, keyboard: false,
               })
                 .then(() => sqlExplorer.render('#sql-explorer-layout'))
                 .close(() => sqlExplorer.destroy())

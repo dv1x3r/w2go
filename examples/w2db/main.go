@@ -9,8 +9,8 @@ import (
 
 	"github.com/dv1x3r/w2go/w2"
 	"github.com/dv1x3r/w2go/w2db"
+	"github.com/dv1x3r/w2go/w2lib"
 	"github.com/dv1x3r/w2go/w2sql"
-	"github.com/dv1x3r/w2go/w2ui"
 	"github.com/dv1x3r/w2go/w2widget"
 
 	"github.com/huandu/go-sqlbuilder"
@@ -81,7 +81,7 @@ func main() {
 	router := http.NewServeMux()
 
 	router.Handle("GET /{$}", http.FileServerFS(htmlFS))
-	router.Handle("GET /lib/", http.StripPrefix("/lib/", w2ui.FileServerFS()))
+	router.Handle("GET /lib/", http.StripPrefix("/lib/", w2lib.FileServerFS()))
 
 	v1 := http.NewServeMux()
 

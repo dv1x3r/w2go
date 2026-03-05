@@ -1,4 +1,4 @@
-package w2ui
+package w2lib
 
 import (
 	"embed"
@@ -6,13 +6,13 @@ import (
 	"net/http"
 )
 
-//go:embed w2ui.*
-var w2uiFS embed.FS
+//go:embed *
+var libFS embed.FS
 
 func FS() fs.FS {
-	return w2uiFS
+	return libFS
 }
 
 func FileServerFS() http.Handler {
-	return http.FileServerFS(w2uiFS)
+	return http.FileServerFS(libFS)
 }

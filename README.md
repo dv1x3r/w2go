@@ -32,7 +32,7 @@ go get github.com/dv1x3r/w2go
 | `w2widget` | Pre-built HTTP handlers for common UI widgets (SQL explorer)                                |
 | `w2file`   | Multipart file upload parsing helpers                                                       |
 | `w2sort`   | In-memory slice reordering for drag-and-drop support                                        |
-| `w2ui`     | Embedded w2ui JS/CSS assets served via `embed.FS`                                           |
+| `w2lib`    | Embedded w2ui JS/CSS assets served via `embed.FS`                                           |
 
 ### Choosing between `w2sql` and `w2db`
 
