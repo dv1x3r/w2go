@@ -10,7 +10,7 @@ export function createSqlExplorerLayout(opts = {}) {
 
   const grid = new w2grid({
     name: 'sqlExplorerGrid',
-    recordHeight: 30,
+    recordHeight: 28,
     show: {
       footer: true,
       toolbar: false,
