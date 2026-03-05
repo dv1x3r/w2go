@@ -168,6 +168,7 @@ export function createSqlExplorerLayout(opts = {}) {
               type: 'check',
               id: 'vim',
               text: 'Vim Mode',
+              tooltip: 'Ctrl-` for maximum efficiency',
               checked: false,
               onClick: async function(event) {
                 await event.complete
@@ -206,6 +207,12 @@ export function createSqlExplorerLayout(opts = {}) {
           'Shift-Esc': () => {
             abortController?.abort('The query has been cancelled')
           },
+          'Ctrl-`': () => {
+            const toolbar = editorLayout.get('main').toolbar
+            toolbar.click('vim')
+            toolbar.disable('vim')
+            toolbar.enable('vim')
+          }
         },
       })
       editor.setSize('100%', '100%')
