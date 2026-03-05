@@ -2,7 +2,7 @@ import { w2grid, w2layout, w2sidebar } from './w2ui.es6.min.js'
 import { w2fetch, registerSidebarSearch } from './w2ui.helpers.js'
 
 export function createSqlExplorerLayout(opts = {}) {
-  const { url } = opts
+  const { url, initialQuery = '' } = opts
 
   let abortController = null
   let isRunning = false
@@ -10,6 +10,7 @@ export function createSqlExplorerLayout(opts = {}) {
 
   const grid = new w2grid({
     name: 'sqlExplorerGrid',
+    recordHeight: 30,
     show: {
       footer: true,
       toolbar: false,
@@ -125,7 +126,7 @@ export function createSqlExplorerLayout(opts = {}) {
     panels: [
       {
         type: 'top',
-        size: '40%',
+        size: '35%',
         resizable: true,
         toolbar: {
           items: [
@@ -179,6 +180,7 @@ export function createSqlExplorerLayout(opts = {}) {
       editor = CodeMirror(document.getElementById('sql-explorer-editor'), {
         lineNumbers: true,
         mode: 'text/x-sql',
+        value: initialQuery,
         extraKeys: {
           "Ctrl-Space": cm => {
             CodeMirror.commands.autocomplete(cm, null, { completeSingle: false })
