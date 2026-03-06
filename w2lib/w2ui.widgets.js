@@ -227,7 +227,7 @@ export function createSqlExplorerLayout(opts = {}) {
     panels: [
       {
         type: 'top',
-        size: '40%',
+        size: '50%',
         resizable: true,
         html: editorLayout,
       },
