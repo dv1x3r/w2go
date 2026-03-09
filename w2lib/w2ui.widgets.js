@@ -1,4 +1,4 @@
-import { w2grid, w2layout, w2sidebar } from './w2ui.es6.min.js'
+import { w2grid, w2layout, w2sidebar, w2utils } from './w2ui.es6.min.js'
 import { w2fetch, registerSidebarSearch } from './w2ui.helpers.js'
 
 export function createSqlExplorerLayout(opts = {}) {
@@ -106,7 +106,7 @@ export function createSqlExplorerLayout(opts = {}) {
         grid.lock({ spinner: true, msg: 'Processing...' })
         grid.columns = result.columns
           .filter(col => col.toLowerCase() !== 'recid')
-          .map(col => ({ field: col, text: col, render: 'nullable', min: 80, sortable: true, editable: {} }))
+          .map(col => ({ field: col, text: w2utils.encodeTags(col), render: 'nullable', min: 80, sortable: true, editable: {} }))
         grid.records = result.records.map((row, i) => {
           const { recid, ...rest } = row;
           return { recid: i + 1, ...rest };
