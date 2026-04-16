@@ -1,6 +1,50 @@
 import { w2ui, w2tooltip, w2utils } from './w2ui.es6.min.js'
 
+const darkThemeStorageKey = 'w2ui-theme'
+const darkThemeChangeEvent = 'w2ui:dark-theme-change'
+
+export function isDarkTheme() {
+  return document.documentElement.classList.contains('dark')
+}
+
+export function setDarkTheme(isDark) {
+  document.documentElement.classList.toggle('dark', isDark)
+  try {
+    localStorage.setItem(darkThemeStorageKey, isDark ? 'dark' : 'light')
+  }
+  catch (_err) {
+  }
+  window.dispatchEvent(new CustomEvent(darkThemeChangeEvent, { detail: { isDark } }))
+}
+
+export function toggleDarkTheme() {
+  setDarkTheme(!isDarkTheme())
+}
+
+export function onDarkThemeChange(listener) {
+  const handleThemeChange = isDark => listener(Boolean(isDark))
+  const handleCustomThemeChange = event => handleThemeChange(event.detail?.isDark)
+  const handleStorageThemeChange = event => {
+    if (event.key == darkThemeStorageKey) {
+      handleThemeChange(event.newValue == 'dark')
+    }
+  }
+
+  window.addEventListener(darkThemeChangeEvent, handleCustomThemeChange)
+  window.addEventListener('storage', handleStorageThemeChange)
+
+  return () => {
+    window.removeEventListener(darkThemeChangeEvent, handleCustomThemeChange)
+    window.removeEventListener('storage', handleStorageThemeChange)
+  }
+}
+
 export function w2init() {
+  try {
+    setDarkTheme(localStorage.getItem(darkThemeStorageKey) == 'dark')
+  }
+  catch (_err) {
+  }
   window.w2ui = w2ui
   window.w2tooltip = w2tooltip
   w2utils.settings.dataType = 'JSON'

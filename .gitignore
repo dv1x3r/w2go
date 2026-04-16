@@ -21,5 +21,7 @@
 go.work
 go.work.sum
 
-# env file
+# Other
 .env
+.DS_Store
+

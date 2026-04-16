@@ -1,15 +1,16 @@
 import { w2grid, w2layout, w2sidebar, w2utils } from './w2ui.es6.min.js'
-import { w2fetch, registerSidebarSearch } from './w2ui.helpers.js'
+import * as helpers from './w2ui.helpers.js'
 
 export function createSqlExplorerLayout(opts = {}) {
-  const { url, initialQuery = '' } = opts
+  const { url, darkTheme = 'dracula', initialQuery = '' } = opts
 
   let abortController = null
   let isRunning = false
   let editor = null
+  let stopWatchingTheme = null
 
   const grid = new w2grid({
-    name: 'sqlExplorerGrid',
+    name: 'sqlExplorerGrid-' + Date.now(),
     selectType: 'cell',
     recordHeight: 28,
     show: {
@@ -20,12 +21,12 @@ export function createSqlExplorerLayout(opts = {}) {
   })
 
   const sidebar = new w2sidebar({
-    name: 'sqlExplorerSidebar',
+    name: 'sqlExplorerSidebar-' + Date.now(),
     levelPadding: 8,
     topHTML: '<div style="margin-top:2px;padding:3px 5px;height:36px;"><input id="sql-explorer-search" class="w2ui-input" style="width:100%;" placeholder="Search..."></div>',
     onRender: async function(event) {
       await event.complete
-      const search = registerSidebarSearch(sidebar)
+      const search = helpers.registerSidebarSearch(sidebar)
       const el = document.getElementById('sql-explorer-search')
       el.addEventListener('keyup', e => search(e.target.value))
     }
@@ -93,7 +94,7 @@ export function createSqlExplorerLayout(opts = {}) {
     const startTime = performance.now()
 
     try {
-      const result = await w2fetch({
+      const result = await helpers.w2fetch({
         owner: grid,
         lock: 'Executing...',
         url: url,
@@ -131,7 +132,7 @@ export function createSqlExplorerLayout(opts = {}) {
   }
 
   const editorLayout = new w2layout({
-    name: 'sqlEditorLayout',
+    name: 'sqlEditorLayout-' + Date.now(),
     panels: [
       {
         type: 'left',
@@ -189,6 +190,7 @@ export function createSqlExplorerLayout(opts = {}) {
       editor = CodeMirror(document.getElementById('sql-explorer-editor'), {
         lineNumbers: true,
         mode: 'text/x-sql',
+        theme: helpers.isDarkTheme() ? darkTheme : 'default',
         value: initialQuery,
         extraKeys: {
           "Ctrl-Space": cm => {
@@ -200,7 +202,7 @@ export function createSqlExplorerLayout(opts = {}) {
           'Shift-Alt-Enter': async () => {
             await executeQuery()
             document.getElementById('sql-explorer-search').value = ''
-            const schema = await w2fetch({ url: url, method: 'GET' })
+            const schema = await helpers.w2fetch({ url: url, method: 'GET' })
             setSchemaSidebar(schema)
             setSchemaAutocomplete(schema)
           },
@@ -215,15 +217,18 @@ export function createSqlExplorerLayout(opts = {}) {
           }
         },
       })
+      stopWatchingTheme = helpers.onDarkThemeChange(isDark => {
+        editor.setOption('theme', isDark ? darkTheme : 'default')
+      })
       editor.setSize('100%', '100%')
-      const schema = await w2fetch({ url: url, method: 'GET' })
+      const schema = await helpers.w2fetch({ url: url, method: 'GET' })
       setSchemaSidebar(schema)
       setSchemaAutocomplete(schema)
     }
   })
 
   return new w2layout({
-    name: 'sqlExplorerLayout',
+    name: 'sqlExplorerLayout-' + Date.now(),
     panels: [
       {
         type: 'top',
@@ -237,6 +242,7 @@ export function createSqlExplorerLayout(opts = {}) {
       },
     ],
     onDestroy: function() {
+      stopWatchingTheme?.()
       abortController?.abort()
       editorLayout.destroy()
       sidebar.destroy()
