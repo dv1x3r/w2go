@@ -11,18 +11,22 @@ import (
 	"github.com/dv1x3r/w2go/w2"
 )
 
+type SQLExecField = w2.Field[string]
+
+type SQLExecRow map[string]SQLExecField
+
+type SQLExecResult struct {
+	Status  w2.Status    `json:"status"`
+	Columns []string     `json:"columns"`
+	Records []SQLExecRow `json:"records"`
+	Total   int          `json:"total"`
+}
+
 type SQLExecRequest struct {
 	Query string `json:"query"`
 }
 
-type SQLExecResult struct {
-	Status  w2.Status        `json:"status"`
-	Columns []string         `json:"columns"`
-	Records []map[string]any `json:"records"`
-	Total   int              `json:"total"`
-}
-
-func NewSQLExecResult(columns []string, records []map[string]any, total int) SQLExecResult {
+func NewSQLExecResult(columns []string, records []SQLExecRow, total int) SQLExecResult {
 	return SQLExecResult{
 		Status:  w2.StatusSuccess,
 		Columns: columns,
@@ -97,10 +101,10 @@ func SQLExecQuery(ctx context.Context, db *sql.DB, query string) (SQLExecResult,
 		columns = []string{}
 	}
 
-	records := []map[string]any{}
+	records := []SQLExecRow{}
 
 	for rows.Next() {
-		values := make([]any, len(columns))
+		values := make([]SQLExecField, len(columns))
 		valuePtrs := make([]any, len(columns))
 		for i := range values {
 			valuePtrs[i] = &values[i]
@@ -110,7 +114,7 @@ func SQLExecQuery(ctx context.Context, db *sql.DB, query string) (SQLExecResult,
 			return SQLExecResult{}, err
 		}
 
-		record := map[string]any{}
+		record := SQLExecRow{}
 		for i, column := range columns {
 			record[column] = values[i]
 		}
