@@ -4,6 +4,17 @@ Go bindings for the [w2ui JavaScript UI Library](https://github.com/vitmalina/w2
 
 Handles request parsing, response serialization, SQL query building, and database operations for `w2grid`, `w2form`, and dropdown components running in JSON mode.
 
+<table>
+  <tr>
+    <td width="50%"><img src="./examples/screenshots/w2grid-light.png" alt="Todo grid example in light theme" /></td>
+    <td width="50%"><img src="./examples/screenshots/w2grid-dark.png" alt="Todo grid example in dark theme" /></td>
+  </tr>
+  <tr>
+    <td align="center"><em>Todo grid in light theme</em></td>
+    <td align="center"><em>Todo grid in dark theme</em></td>
+  </tr>
+</table>
+
 - [Install](#install)
 - [Packages](#packages)
 - [Usage](#usage)
@@ -313,6 +324,8 @@ Features:
 - Execute selection or full query
 - Cancel in-flight queries
 - Result grid with row count and elapsed time
+
+<img src="./examples/screenshots/sql-explorer.png" alt="Built-in SQL explorer widget" />
 
 > **Note:** `SQL Explorer` executes arbitrary SQL from the client. Do not expose it in production!
 
