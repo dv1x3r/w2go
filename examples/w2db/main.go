@@ -179,7 +179,7 @@ func postTodoGridSave(w http.ResponseWriter, r *http.Request) {
 			BuildUpdate: func(change Todo) *sqlbuilder.UpdateBuilder {
 				ub := sqlbuilder.Update("todo")
 				ub.Where(ub.EQ("id", change.ID))
-				w2sql.SetNoNull(ub, change.Description, "description")
+				w2sql.SetNotNull(ub, change.Description, "description")
 				w2sql.Set(ub, change.Quantity, "quantity")
 				w2sql.Set(ub, change.Status.ID, "status_id")
 				return ub

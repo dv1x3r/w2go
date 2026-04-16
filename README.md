@@ -147,13 +147,13 @@ query, args := sb.BuildWithFlavor(sqlbuilder.SQLite)
 **Applying inline updates**
 
 - `w2sql.Set` - sets the column if the field was provided; writes `NULL` if the value is empty.
-- `w2sql.SetNoNull` - sets the column if the field was provided; writes the zero value if empty.
+- `w2sql.SetNotNull` - sets the column if the field was provided; writes the zero value if empty.
 
 ```go
 for _, change := range req.Changes {
     ub := sqlbuilder.Update("todo")
     ub.Where(ub.EQ("id", change.ID))
-    w2sql.SetNoNull(ub, change.Name, "name")
+    w2sql.SetNotNull(ub, change.Name, "name")
     w2sql.Set(ub, change.Description, "description")
     w2sql.Set(ub, change.Quantity, "quantity")
 }
@@ -183,7 +183,7 @@ affected, err := w2db.SaveGrid(tx, req, w2db.SaveGridOptions[Todo]{
     BuildUpdate: func(change Todo) *sqlbuilder.UpdateBuilder {
         ub := sqlbuilder.Update("todo")
         ub.Where(ub.EQ("id", change.ID))
-        w2sql.SetNoNull(ub, change.Name, "name")
+        w2sql.SetNotNull(ub, change.Name, "name")
         w2sql.Set(ub, change.Description, "description")
         return ub
     },

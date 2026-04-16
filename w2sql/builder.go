@@ -19,9 +19,9 @@ func Set[T any](ub *sqlbuilder.UpdateBuilder, value w2.Field[T], field string) {
 	}
 }
 
-// SetNoNull updates the field only if a value is provided.
+// SetNotNull updates the field only if a value is provided.
 // Unlike Assign, it always sets the field to the provided value even if invalid, using the zero value instead of NULL.
-func SetNoNull[T any](ub *sqlbuilder.UpdateBuilder, value w2.Field[T], field string) {
+func SetNotNull[T any](ub *sqlbuilder.UpdateBuilder, value w2.Field[T], field string) {
 	if value.Provided {
 		ub.SetMore(ub.Assign(field, value.V))
 	}
