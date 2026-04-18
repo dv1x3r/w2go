@@ -1,6 +1,8 @@
 import { w2grid, w2layout, w2sidebar, w2utils } from './w2ui.es6.min.js'
 import * as helpers from './w2ui.helpers.js'
 
+const vimModeStorageKey = 'w2ui-sql-explorer-vim-mode'
+
 export function createSqlExplorerLayout(opts = {}) {
   const { url, darkTheme = 'dracula', initialQuery = '' } = opts
 
@@ -31,6 +33,24 @@ export function createSqlExplorerLayout(opts = {}) {
       el.addEventListener('keyup', e => search(e.target.value))
     }
   })
+
+  function isVimModeEnabled() {
+    try {
+      return localStorage.getItem(vimModeStorageKey) == 'true'
+    }
+    catch (_err) {
+      return false
+    }
+  }
+
+  function setVimMode(enabled) {
+    editor?.setOption('keyMap', enabled ? 'vim' : 'default')
+    try {
+      localStorage.setItem(vimModeStorageKey, enabled ? 'true' : 'false')
+    }
+    catch (_err) {
+    }
+  }
 
   function setSchemaSidebar(schema) {
     sidebar.nodes = schema.databases.map((db, dbIndex) => ({
@@ -170,11 +190,10 @@ export function createSqlExplorerLayout(opts = {}) {
               id: 'vim',
               text: 'Vim Mode',
               tooltip: 'Ctrl-` for maximum efficiency',
-              checked: false,
+              checked: isVimModeEnabled(),
               onClick: async function(event) {
                 await event.complete
-                const checked = event.detail.item.checked
-                editor.setOption('keyMap', checked ? 'vim' : 'default')
+                setVimMode(event.detail.item.checked)
               },
             },
           ],
@@ -189,6 +208,7 @@ export function createSqlExplorerLayout(opts = {}) {
       })
       editor = CodeMirror(document.getElementById('sql-explorer-editor'), {
         lineNumbers: true,
+        keyMap: isVimModeEnabled() ? 'vim' : 'default',
         mode: 'text/x-sql',
         theme: helpers.isDarkTheme() ? darkTheme : 'default',
         value: initialQuery,
