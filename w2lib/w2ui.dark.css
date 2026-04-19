@@ -532,10 +532,6 @@ html.dark .w2ui-layout>div .w2ui-panel .w2ui-panel-content {
   border-left-color: var(--w2-layout-edge) !important;
 }
 
-html.dark .w2ui-layout>div .w2ui-resizer {
-  background-color: var(--w2-surface);
-}
-
 html.dark .w2ui-layout>div .w2ui-resizer:hover,
 html.dark .w2ui-layout>div .w2ui-resizer.active {
   background-color: var(--w2-border-soft);
