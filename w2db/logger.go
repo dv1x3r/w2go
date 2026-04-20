@@ -10,9 +10,6 @@ var defaultLogger *slog.Logger
 var slowThreshold = 250 * time.Millisecond
 
 func SetLogger(logger *slog.Logger) {
-	if logger != nil {
-		logger = logger.With("pkg", "w2db")
-	}
 	defaultLogger = logger
 }
 
@@ -27,20 +24,20 @@ func traceSQL(ctx context.Context, logger *slog.Logger, begin time.Time, query s
 
 	elapsed := time.Since(begin)
 	logArgs := []any{
-		"query", query,
+		slog.String("sql", query),
 		"args", append([]any(nil), args...),
-		"elapsed", elapsed,
+		slog.Duration("elapsed", elapsed),
 	}
 
 	if err != nil {
-		logger.ErrorContext(ctx, "sql", append(logArgs, "err", err)...)
+		logger.ErrorContext(ctx, "w2db", append(logArgs, "err", err)...)
 		return
 	}
 
 	if slowThreshold > 0 && elapsed >= slowThreshold {
-		logger.WarnContext(ctx, "sql", logArgs...)
+		logger.WarnContext(ctx, "w2db", logArgs...)
 		return
 	}
 
-	logger.DebugContext(ctx, "sql", logArgs...)
+	logger.DebugContext(ctx, "w2db", logArgs...)
 }
