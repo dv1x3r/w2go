@@ -62,12 +62,13 @@ func GetGridContext[T any](ctx context.Context, db QueryDB, req w2.GetGridReques
 	var records []T
 
 	countBuilder := sqlbuilder.Select(countExpr).From(opts.From)
+	countBuilder.SetFlavor(flavor)
 	if opts.BuildBase != nil {
 		opts.BuildBase(countBuilder)
 	}
 
 	w2sql.Where(countBuilder, req, opts.WhereMapping)
-	query, args := countBuilder.BuildWithFlavor(flavor)
+	query, args := countBuilder.Build()
 
 	begin := time.Now()
 	row := db.QueryRowContext(ctx, query, args...)
@@ -80,6 +81,7 @@ func GetGridContext[T any](ctx context.Context, db QueryDB, req w2.GetGridReques
 	}
 
 	dataBuilder := sqlbuilder.Select(opts.Select...).From(opts.From)
+	dataBuilder.SetFlavor(flavor)
 	if opts.BuildBase != nil {
 		opts.BuildBase(dataBuilder)
 	}
@@ -91,7 +93,7 @@ func GetGridContext[T any](ctx context.Context, db QueryDB, req w2.GetGridReques
 	w2sql.OrderBy(dataBuilder, req, opts.OrderByMapping)
 	w2sql.Limit(dataBuilder, req)
 	w2sql.Offset(dataBuilder, req)
-	query, args = dataBuilder.BuildWithFlavor(flavor)
+	query, args = dataBuilder.Build()
 
 	begin = time.Now()
 	rows, err := db.QueryContext(ctx, query, args...)

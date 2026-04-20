@@ -59,7 +59,8 @@ func GetDropdownContext(ctx context.Context, db QueryDB, req w2.GetDropdownReque
 
 	if req.Search != "" {
 		if flavor == sqlbuilder.SQLite {
-			builder.Where(builder.GT("INSTR("+opts.TextField+", "+builder.Var(req.Search)+")", 0))
+			expr := sqlbuilder.Buildf("INSTR(LOWER(%v), LOWER(%v)) > 0", sqlbuilder.Raw(opts.TextField), req.Search)
+			builder.Where(builder.Var(expr))
 		} else {
 			builder.Where(builder.Like(opts.TextField, "%"+req.Search+"%"))
 		}

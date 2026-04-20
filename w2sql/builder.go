@@ -61,7 +61,8 @@ func Where(sb *sqlbuilder.SelectBuilder, r w2.GetGridRequest, mapping map[string
 			case "begins":
 				if s.Value != "" {
 					if sb.Flavor() == sqlbuilder.SQLite {
-						c = append(c, sb.EQ("INSTR("+field+", "+sb.Var(s.Value)+")", 1))
+						expr := sqlbuilder.Buildf("INSTR(LOWER(%v), LOWER(%v)) = 1", sqlbuilder.Raw(field), s.Value)
+						c = append(c, sb.Var(expr))
 					} else {
 						c = append(c, sb.Like(field, fmt.Sprintf("%v%%", s.Value)))
 					}
@@ -69,7 +70,8 @@ func Where(sb *sqlbuilder.SelectBuilder, r w2.GetGridRequest, mapping map[string
 			case "contains":
 				if s.Value != "" {
 					if sb.Flavor() == sqlbuilder.SQLite {
-						c = append(c, sb.GT("INSTR("+field+", "+sb.Var(s.Value)+")", 0))
+						expr := sqlbuilder.Buildf("INSTR(LOWER(%v), LOWER(%v)) > 0", sqlbuilder.Raw(field), s.Value)
+						c = append(c, sb.Var(expr))
 					} else {
 						c = append(c, sb.Like(field, fmt.Sprintf("%%%v%%", s.Value)))
 					}
@@ -77,10 +79,12 @@ func Where(sb *sqlbuilder.SelectBuilder, r w2.GetGridRequest, mapping map[string
 			case "ends":
 				if s.Value != "" {
 					if sb.Flavor() == sqlbuilder.SQLite {
-						c = append(c, sb.EQ(
-							"INSTR("+field+", "+sb.Var(s.Value)+")",
-							"LENGTH("+field+") - LENGTH("+sb.Var(s.Value)+") + 1",
-						))
+						expr := sqlbuilder.Buildf(
+							"INSTR(LOWER(%v), LOWER(%v)) = LENGTH(%v) - LENGTH(%v) + 1",
+							sqlbuilder.Raw(field), s.Value,
+							sqlbuilder.Raw(field), s.Value,
+						)
+						c = append(c, sb.Var(expr))
 					} else {
 						c = append(c, sb.Like(field, fmt.Sprintf("%%%v", s.Value)))
 					}
