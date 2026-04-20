@@ -136,14 +136,14 @@ export function boolOptions() {
   return { items: [{ id: '1', text: 'True' }, { id: '0', text: 'False' }] }
 }
 
-export function remoteListOptions(url) {
+export function remoteListOptions(url, cacheMax=500) {
   return {
     url: url,
     type: 'list',
     recId: 'id',
     match: 'contains',
     align: 'left',
-    cacheMax: 5000,
+    cacheMax: cacheMax,
     minLength: 0,
     openOnFocus: true,
     renderDrop: value => w2utils.encodeTags(value?.text),
