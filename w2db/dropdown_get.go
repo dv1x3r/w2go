@@ -14,6 +14,7 @@ type GetDropdownOptions struct {
 	IDField      string
 	TextField    string
 	OrderByField string
+	BuildSelect  func(sb *sqlbuilder.SelectBuilder)
 	Flavor       sqlbuilder.Flavor
 }
 
@@ -44,7 +45,18 @@ func GetDropdownContext(ctx context.Context, db QueryDB, req w2.GetDropdownReque
 	}
 
 	builder := sqlbuilder.Select(opts.IDField, opts.TextField).From(opts.From)
-	builder.Where(builder.Like(opts.TextField, "%"+req.Search+"%"))
+	if opts.BuildSelect != nil {
+		opts.BuildSelect(builder)
+	}
+
+	if req.Search != "" {
+		if flavor == sqlbuilder.SQLite {
+			builder.Where(builder.GT("INSTR("+opts.TextField+", "+builder.Var(req.Search)+")", 0))
+		} else {
+			builder.Where(builder.Like(opts.TextField, "%"+req.Search+"%"))
+		}
+	}
+
 	builder.OrderBy(opts.OrderByField)
 	builder.Limit(req.Max)
 

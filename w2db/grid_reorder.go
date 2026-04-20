@@ -11,10 +11,11 @@ import (
 )
 
 type ReorderGridOptions struct {
-	Update   string
-	IDField  string
-	SetField string
-	Flavor   sqlbuilder.Flavor
+	Update      string
+	IDField     string
+	SetField    string
+	Flavor      sqlbuilder.Flavor
+	BuildSelect func(sb *sqlbuilder.SelectBuilder)
 }
 
 func ReorderGrid(db QueryExecDB, req w2.ReorderGridRequest, opts ReorderGridOptions) (int, error) {
@@ -40,6 +41,9 @@ func ReorderGridContext(ctx context.Context, db QueryExecDB, req w2.ReorderGridR
 	}
 
 	selectBuilder := sqlbuilder.Select(opts.IDField).From(opts.Update)
+	if opts.BuildSelect != nil {
+		opts.BuildSelect(selectBuilder)
+	}
 	selectBuilder.OrderBy(opts.SetField)
 	query, args := selectBuilder.BuildWithFlavor(flavor)
 

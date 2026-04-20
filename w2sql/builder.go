@@ -59,11 +59,32 @@ func Where(sb *sqlbuilder.SelectBuilder, r w2.GetGridRequest, mapping map[string
 			case "<=":
 				c = append(c, sb.LTE(field, s.Value))
 			case "begins":
-				c = append(c, sb.Like(field, fmt.Sprintf("%v%%", s.Value)))
+				if s.Value != "" {
+					if sb.Flavor() == sqlbuilder.SQLite {
+						c = append(c, sb.EQ("INSTR("+field+", "+sb.Var(s.Value)+")", 1))
+					} else {
+						c = append(c, sb.Like(field, fmt.Sprintf("%v%%", s.Value)))
+					}
+				}
 			case "contains":
-				c = append(c, sb.Like(field, fmt.Sprintf("%%%v%%", s.Value)))
+				if s.Value != "" {
+					if sb.Flavor() == sqlbuilder.SQLite {
+						c = append(c, sb.GT("INSTR("+field+", "+sb.Var(s.Value)+")", 0))
+					} else {
+						c = append(c, sb.Like(field, fmt.Sprintf("%%%v%%", s.Value)))
+					}
+				}
 			case "ends":
-				c = append(c, sb.Like(field, fmt.Sprintf("%%%v", s.Value)))
+				if s.Value != "" {
+					if sb.Flavor() == sqlbuilder.SQLite {
+						c = append(c, sb.EQ(
+							"INSTR("+field+", "+sb.Var(s.Value)+")",
+							"LENGTH("+field+") - LENGTH("+sb.Var(s.Value)+") + 1",
+						))
+					} else {
+						c = append(c, sb.Like(field, fmt.Sprintf("%%%v", s.Value)))
+					}
+				}
 			case "between":
 				if values, ok := s.Value.([]any); ok && len(values) == 2 {
 					c = append(c, sb.Between(field, values[0], values[1]))
