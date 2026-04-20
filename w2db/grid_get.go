@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
+	"time"
 
 	"github.com/dv1x3r/w2go/w2"
 	"github.com/dv1x3r/w2go/w2sql"
@@ -21,6 +23,7 @@ type GetGridOptions[T any] struct {
 	BuildBase      func(sb *sqlbuilder.SelectBuilder)
 	BuildSelect    func(sb *sqlbuilder.SelectBuilder)
 	Scan           func(rows *sql.Rows) (T, error)
+	Logger         *slog.Logger
 }
 
 func GetGrid[T any](db QueryDB, req w2.GetGridRequest, opts GetGridOptions[T]) (w2.GetGridResponse[T], error) {
@@ -50,6 +53,11 @@ func GetGridContext[T any](ctx context.Context, db QueryDB, req w2.GetGridReques
 		flavor = sqlbuilder.DefaultFlavor
 	}
 
+	logger := opts.Logger
+	if logger == nil {
+		logger = defaultLogger
+	}
+
 	var total int
 	var records []T
 
@@ -59,10 +67,12 @@ func GetGridContext[T any](ctx context.Context, db QueryDB, req w2.GetGridReques
 	}
 
 	w2sql.Where(countBuilder, req, opts.WhereMapping)
-
 	query, args := countBuilder.BuildWithFlavor(flavor)
+
+	begin := time.Now()
 	row := db.QueryRowContext(ctx, query, args...)
 	err := row.Scan(&total)
+	traceSQL(ctx, logger, begin, query, args, err)
 	if errors.Is(err, sql.ErrNoRows) {
 		return w2.NewGetGridResponse(records, 0), nil
 	} else if err != nil {
@@ -81,10 +91,12 @@ func GetGridContext[T any](ctx context.Context, db QueryDB, req w2.GetGridReques
 	w2sql.OrderBy(dataBuilder, req, opts.OrderByMapping)
 	w2sql.Limit(dataBuilder, req)
 	w2sql.Offset(dataBuilder, req)
-
 	query, args = dataBuilder.BuildWithFlavor(flavor)
+
+	begin = time.Now()
 	rows, err := db.QueryContext(ctx, query, args...)
 	if err != nil {
+		traceSQL(ctx, logger, begin, query, args, err)
 		return w2.GetGridResponse[T]{}, err
 	}
 	defer rows.Close()
@@ -98,14 +110,17 @@ func GetGridContext[T any](ctx context.Context, db QueryDB, req w2.GetGridReques
 	for rows.Next() {
 		record, err := opts.Scan(rows)
 		if err != nil {
+			traceSQL(ctx, logger, begin, query, args, err)
 			return w2.GetGridResponse[T]{}, fmt.Errorf("scan: %w", err)
 		}
 		records = append(records, record)
 	}
 
 	if err := rows.Err(); err != nil {
+		traceSQL(ctx, logger, begin, query, args, err)
 		return w2.GetGridResponse[T]{}, err
 	}
 
+	traceSQL(ctx, logger, begin, query, args, nil)
 	return w2.NewGetGridResponse(records, total), nil
 }

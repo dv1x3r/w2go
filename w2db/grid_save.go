@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
+	"time"
 
 	"github.com/dv1x3r/w2go/w2"
 	"github.com/huandu/go-sqlbuilder"
@@ -12,6 +14,7 @@ import (
 type SaveGridOptions[T any] struct {
 	Flavor      sqlbuilder.Flavor
 	BuildUpdate func(change T) *sqlbuilder.UpdateBuilder
+	Logger      *slog.Logger
 }
 
 func SaveGrid[T any](db ExecDB, req w2.SaveGridRequest[T], opts SaveGridOptions[T]) (int, error) {
@@ -32,12 +35,19 @@ func SaveGridContext[T any](ctx context.Context, db ExecDB, req w2.SaveGridReque
 		flavor = sqlbuilder.DefaultFlavor
 	}
 
+	logger := opts.Logger
+	if logger == nil {
+		logger = defaultLogger
+	}
+
 	affected := 0
 
 	for i, change := range req.Changes {
 		builder := opts.BuildUpdate(change)
 		query, args := builder.BuildWithFlavor(flavor)
+		begin := time.Now()
 		result, err := db.ExecContext(ctx, query, args...)
+		traceSQL(ctx, logger, begin, query, args, err)
 		if err != nil {
 			return 0, fmt.Errorf("update [%d]: %w", i, err)
 		}

@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
+	"time"
 
 	"github.com/dv1x3r/w2go/w2"
 	"github.com/huandu/go-sqlbuilder"
@@ -14,6 +16,7 @@ type InsertFormOptions struct {
 	Cols   []string
 	Values []any
 	Flavor sqlbuilder.Flavor
+	Logger *slog.Logger
 }
 
 func InsertForm[T any](db ExecDB, req w2.SaveFormRequest[T], opts InsertFormOptions) (int, error) {
@@ -42,12 +45,19 @@ func InsertFormContext[T any](ctx context.Context, db ExecDB, req w2.SaveFormReq
 		flavor = sqlbuilder.DefaultFlavor
 	}
 
+	logger := opts.Logger
+	if logger == nil {
+		logger = defaultLogger
+	}
+
 	builder := sqlbuilder.InsertInto(opts.Into)
 	builder.Cols(opts.Cols...)
 	builder.Values(opts.Values...)
-
 	query, args := builder.BuildWithFlavor(flavor)
+
+	begin := time.Now()
 	result, err := db.ExecContext(ctx, query, args...)
+	traceSQL(ctx, logger, begin, query, args, err)
 	if err != nil {
 		return 0, fmt.Errorf("insert: %w", err)
 	}

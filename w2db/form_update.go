@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
+	"time"
 
 	"github.com/dv1x3r/w2go/w2"
 	"github.com/huandu/go-sqlbuilder"
@@ -15,6 +17,7 @@ type UpdateFormOptions struct {
 	Cols    []string
 	Values  []any
 	Flavor  sqlbuilder.Flavor
+	Logger  *slog.Logger
 }
 
 func UpdateForm[T any](db ExecDB, req w2.SaveFormRequest[T], opts UpdateFormOptions) (int, error) {
@@ -47,15 +50,22 @@ func UpdateFormContext[T any](ctx context.Context, db ExecDB, req w2.SaveFormReq
 		flavor = sqlbuilder.DefaultFlavor
 	}
 
+	logger := opts.Logger
+	if logger == nil {
+		logger = defaultLogger
+	}
+
 	builder := sqlbuilder.Update(opts.Update)
 	for i := range opts.Cols {
 		builder.SetMore(builder.Assign(opts.Cols[i], opts.Values[i]))
 	}
 
 	builder.Where(builder.EQ(opts.IDField, req.RecID))
-
 	query, args := builder.BuildWithFlavor(flavor)
+
+	begin := time.Now()
 	result, err := db.ExecContext(ctx, query, args...)
+	traceSQL(ctx, logger, begin, query, args, err)
 	if err != nil {
 		return 0, fmt.Errorf("update: %w", err)
 	}

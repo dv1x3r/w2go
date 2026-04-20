@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
+	"time"
 
 	"github.com/dv1x3r/w2go/w2"
 	"github.com/huandu/go-sqlbuilder"
@@ -17,6 +19,7 @@ type GetFormOptions[T any] struct {
 	Flavor      sqlbuilder.Flavor
 	BuildSelect func(sb *sqlbuilder.SelectBuilder)
 	Scan        func(row *sql.Row) (T, error)
+	Logger      *slog.Logger
 }
 
 func GetForm[T any](db QueryDB, req w2.GetFormRequest, opts GetFormOptions[T]) (w2.GetFormResponse[T], error) {
@@ -45,16 +48,23 @@ func GetFormContext[T any](ctx context.Context, db QueryDB, req w2.GetFormReques
 		flavor = sqlbuilder.DefaultFlavor
 	}
 
+	logger := opts.Logger
+	if logger == nil {
+		logger = defaultLogger
+	}
+
 	builder := sqlbuilder.Select(opts.Select...).From(opts.From)
 	if opts.BuildSelect != nil {
 		opts.BuildSelect(builder)
 	}
 
 	builder.Where(builder.EQ(opts.IDField, req.RecID))
-
 	query, args := builder.BuildWithFlavor(flavor)
+
+	begin := time.Now()
 	row := db.QueryRowContext(ctx, query, args...)
 	record, err := opts.Scan(row)
+	traceSQL(ctx, logger, begin, query, args, err)
 	if err != nil {
 		return w2.GetFormResponse[T]{}, fmt.Errorf("scan: %w", err)
 	}

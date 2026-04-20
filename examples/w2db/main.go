@@ -5,7 +5,9 @@ import (
 	"embed"
 	"errors"
 	"log"
+	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/dv1x3r/w2go/w2"
 	"github.com/dv1x3r/w2go/w2db"
@@ -77,6 +79,11 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	w2db.SetLogger(slog.New(slog.NewTextHandler(
+		os.Stdout,
+		&slog.HandlerOptions{Level: slog.LevelDebug}),
+	))
 
 	router := http.NewServeMux()
 
