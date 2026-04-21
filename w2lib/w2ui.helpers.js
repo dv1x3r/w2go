@@ -118,6 +118,17 @@ export function w2upload(opts = {}) {
   input.click()
 }
 
+export async function w2reorder(event, opts = {}) {
+  await w2fetch({
+    ...opts,
+    owner: event.owner,
+    lock: 'Reordering...',
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(event.detail),
+  })
+}
+
 export function registerSidebarSearch(sidebar) {
   // Normalize the string to ensure consistent comparison (garumzīmes)
   const normalize = str => str?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
@@ -136,7 +147,7 @@ export function boolOptions() {
   return { items: [{ id: '1', text: 'True' }, { id: '0', text: 'False' }] }
 }
 
-export function remoteListOptions(url, cacheMax=500) {
+export function remoteListOptions(url, cacheMax = 500) {
   return {
     url: url,
     type: 'list',

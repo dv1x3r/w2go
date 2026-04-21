@@ -265,16 +265,7 @@
             size: '250px',
           },
         ],
-        onReorderRow: async function (event) {
-          await helpers.w2fetch({
-            owner: this,
-            lock: 'Reordering...',
-            url: '/api/v1/status/grid/reorder',
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(event.detail),
-          })
-        },
+        onReorderRow: function (event) {helpers.w2reorder(event, {url: '/api/v1/status/grid/reorder'})},
       })
     }
   </script>
