@@ -119,7 +119,7 @@ export function w2upload(opts = {}) {
 }
 
 export async function w2reorder(event, opts = {}) {
-  await w2fetch({
+  const result = await w2fetch({
     ...opts,
     owner: event.owner,
     lock: 'Reordering...',
@@ -127,6 +127,9 @@ export async function w2reorder(event, opts = {}) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(event.detail),
   })
+  if (!result) {
+    event.owner.reload()
+  }
 }
 
 export function registerSidebarSearch(sidebar) {
