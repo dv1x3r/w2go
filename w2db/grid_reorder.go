@@ -52,7 +52,7 @@ func ReorderGridContext(ctx context.Context, db QueryExecDB, req w2.ReorderGridR
 	if opts.BuildSelect != nil {
 		opts.BuildSelect(selectBuilder)
 	}
-	selectBuilder.OrderBy(opts.SetField)
+	selectBuilder.OrderByAsc(opts.SetField).OrderByDesc(opts.IDField)
 	query, args := selectBuilder.BuildWithFlavor(flavor)
 
 	begin := time.Now()

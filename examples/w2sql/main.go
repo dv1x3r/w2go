@@ -397,7 +397,7 @@ func getStatusGridRecords(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sb.Select("id", "name")
-	sb.OrderByAsc("position")
+	sb.OrderByAsc("position").OrderByDesc("id")
 
 	w2sql.Limit(sb, req)
 	w2sql.Offset(sb, req)

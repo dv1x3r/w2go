@@ -356,7 +356,7 @@ func getStatusGridRecords(w http.ResponseWriter, r *http.Request) {
 		Select: []string{"id", "name"},
 		Flavor: sqlbuilder.SQLite,
 		BuildSelect: func(sb *sqlbuilder.SelectBuilder) {
-			sb.OrderByAsc("position")
+			sb.OrderByAsc("position").OrderByDesc("id")
 		},
 		Scan: func(rows *sql.Rows) (Status, error) {
 			var record Status
