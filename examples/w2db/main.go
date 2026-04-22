@@ -5,6 +5,7 @@ import (
 	"embed"
 	"errors"
 	"flag"
+	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
@@ -19,8 +20,6 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 	_ "modernc.org/sqlite"
 )
-
-const address = "localhost:3000"
 
 //go:embed index.html
 var htmlFS embed.FS
@@ -54,6 +53,8 @@ type Status struct {
 }
 
 func main() {
+	addr := flag.String("addr", "localhost", "Listening address")
+	port := flag.Int("port", 3000, "Listening port")
 	readonly = flag.Bool("readonly", false, "Disable POST requests for demo")
 	flag.Parse()
 
@@ -126,12 +127,13 @@ func main() {
 
 	router.Handle("/api/v1/", http.StripPrefix("/api/v1", v1))
 
-	var logmode string
+	var mode string
 	if *readonly {
-		logmode = " in readonly mode"
+		mode = " in readonly mode"
 	}
 
-	log.Println("listening on: " + address + logmode)
+	address := fmt.Sprintf("%s:%d", *addr, *port)
+	log.Println("listening on: " + address + mode)
 	if err := http.ListenAndServe(address, router); err != nil {
 		log.Fatalln(err)
 	}

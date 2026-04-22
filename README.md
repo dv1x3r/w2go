@@ -388,6 +388,15 @@ go run ./examples/w2sql/main.go
 
 Open `http://localhost:3000` in your browser.
 
+The `w2db` example also includes a Docker image definition:
+
+```shell
+docker build -f examples/w2db/Dockerfile -t w2go-w2db-demo .
+docker run --rm -p 3000:3000 w2go-w2db-demo
+# or in readonly mode
+docker run --rm -p 3000:3000 w2go-w2db-demo --addr 0.0.0.0 -port 3000 -readonly
+```
+
 Both examples cover a full todo CRUD app with inline grid editing, a form popup, a status dropdown, and drag-and-drop reordering. The `w2db` example also includes the SQL explorer widget.
 
 ## License
