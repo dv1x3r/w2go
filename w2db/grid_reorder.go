@@ -13,12 +13,12 @@ import (
 )
 
 type ReorderGridOptions struct {
-	Update      string
-	IDField     string
-	SetField    string
-	Flavor      sqlbuilder.Flavor
-	BuildSelect func(sb *sqlbuilder.SelectBuilder)
-	Logger      *slog.Logger
+	Update     string
+	IDField    string
+	SetField   string
+	GroupField string
+	Flavor     sqlbuilder.Flavor
+	Logger     *slog.Logger
 }
 
 func ReorderGrid(db QueryExecDB, req w2.ReorderGridRequest, opts ReorderGridOptions) (int, error) {
@@ -49,9 +49,13 @@ func ReorderGridContext(ctx context.Context, db QueryExecDB, req w2.ReorderGridR
 	}
 
 	selectBuilder := sqlbuilder.Select(opts.IDField).From(opts.Update)
-	if opts.BuildSelect != nil {
-		opts.BuildSelect(selectBuilder)
+
+	if opts.GroupField != "" {
+		sub := sqlbuilder.Select(opts.GroupField).From(opts.Update)
+		sub.Where(sub.EQ(opts.IDField, req.RecID))
+		selectBuilder.Where(selectBuilder.In(opts.GroupField, sub))
 	}
+
 	selectBuilder.OrderByAsc(opts.SetField).OrderByDesc(opts.IDField)
 	query, args := selectBuilder.BuildWithFlavor(flavor)
 
