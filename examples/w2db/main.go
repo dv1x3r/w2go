@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"embed"
 	"errors"
+	"flag"
 	"log"
 	"log/slog"
 	"net/http"
@@ -26,6 +27,19 @@ var htmlFS embed.FS
 
 var db *sql.DB
 
+var readonly *bool
+
+func protect(next func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if *readonly {
+			res := w2.NewErrorResponse("running in readonly mode")
+			res.Write(w, http.StatusForbidden)
+			return
+		}
+		next(w, r)
+	}
+}
+
 type Todo struct {
 	ID          int              `json:"id"`
 	Name        string           `json:"name"`
@@ -40,6 +54,9 @@ type Status struct {
 }
 
 func main() {
+	readonly = flag.Bool("readonly", false, "Disable POST requests for demo")
+	flag.Parse()
+
 	var err error
 	if db, err = sql.Open("sqlite", ":memory:"); err != nil {
 		log.Fatalln(err)
@@ -94,22 +111,27 @@ func main() {
 	v1 := http.NewServeMux()
 
 	v1.HandleFunc("GET /todo/grid/records", getTodoGridRecords)
-	v1.HandleFunc("POST /todo/grid/save", postTodoGridSave)
-	v1.HandleFunc("POST /todo/grid/remove", postTodoGridRemove)
+	v1.HandleFunc("POST /todo/grid/save", protect(postTodoGridSave))
+	v1.HandleFunc("POST /todo/grid/remove", protect(postTodoGridRemove))
 
 	v1.HandleFunc("GET /todo/form", getTodoForm)
-	v1.HandleFunc("POST /todo/form", postTodoForm)
+	v1.HandleFunc("POST /todo/form", protect(postTodoForm))
 
 	v1.HandleFunc("GET /status/dropdown", getStatusDropdown)
 	v1.HandleFunc("GET /status/grid/records", getStatusGridRecords)
-	v1.HandleFunc("POST /status/grid/reorder", postStatusGridReorder)
+	v1.HandleFunc("POST /status/grid/reorder", protect(postStatusGridReorder))
 
 	v1.HandleFunc("GET /sql", w2widget.SQLiteSchemaHTTPHandler(db))
-	v1.HandleFunc("POST /sql", w2widget.SQLExecHTTPHandler(db))
+	v1.HandleFunc("POST /sql", protect(w2widget.SQLExecHTTPHandler(db)))
 
 	router.Handle("/api/v1/", http.StripPrefix("/api/v1", v1))
 
-	log.Println("listening on: " + address)
+	var logmode string
+	if *readonly {
+		logmode = " in readonly mode"
+	}
+
+	log.Println("listening on: " + address + logmode)
 	if err := http.ListenAndServe(address, router); err != nil {
 		log.Fatalln(err)
 	}
