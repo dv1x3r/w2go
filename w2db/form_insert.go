@@ -42,7 +42,7 @@ func InsertFormContext[T any](ctx context.Context, db ExecDB, req w2.SaveFormReq
 
 	flavor := opts.Flavor
 	if flavor == 0 {
-		flavor = sqlbuilder.DefaultFlavor
+		flavor = defaultFlavor
 	}
 
 	logger := opts.Logger

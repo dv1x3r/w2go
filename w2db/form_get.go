@@ -45,7 +45,7 @@ func GetFormContext[T any](ctx context.Context, db QueryDB, req w2.GetFormReques
 
 	flavor := opts.Flavor
 	if flavor == 0 {
-		flavor = sqlbuilder.DefaultFlavor
+		flavor = defaultFlavor
 	}
 
 	logger := opts.Logger

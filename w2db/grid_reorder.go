@@ -40,7 +40,7 @@ func ReorderGridContext(ctx context.Context, db QueryExecDB, req w2.ReorderGridR
 
 	flavor := opts.Flavor
 	if flavor == 0 {
-		flavor = sqlbuilder.DefaultFlavor
+		flavor = defaultFlavor
 	}
 
 	logger := opts.Logger

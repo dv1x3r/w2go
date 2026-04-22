@@ -80,6 +80,7 @@ func main() {
 		log.Fatalln(err)
 	}
 
+	w2db.SetFlavor(sqlbuilder.SQLite)
 	w2db.SetLogger(slog.New(slog.NewTextHandler(
 		os.Stdout,
 		&slog.HandlerOptions{Level: slog.LevelDebug}),
@@ -146,7 +147,6 @@ func getTodoGridRecords(w http.ResponseWriter, r *http.Request) {
 			"quantity":    "t.quantity",
 			"status":      "s.name",
 		},
-		Flavor: sqlbuilder.SQLite,
 		BuildBase: func(sb *sqlbuilder.SelectBuilder) {
 			sb.JoinWithOption(sqlbuilder.LeftJoin, "status as s", "s.id = t.status_id")
 		},
@@ -181,7 +181,6 @@ func postTodoGridSave(w http.ResponseWriter, r *http.Request) {
 
 	err = w2db.WithinTransaction(db, func(tx *sql.Tx) error {
 		_, err := w2db.SaveGrid(tx, req, w2db.SaveGridOptions[Todo]{
-			Flavor: sqlbuilder.SQLite,
 			BuildUpdate: func(change Todo) *sqlbuilder.UpdateBuilder {
 				ub := sqlbuilder.Update("todo")
 				ub.Where(ub.EQ("id", change.ID))
@@ -215,7 +214,6 @@ func postTodoGridRemove(w http.ResponseWriter, r *http.Request) {
 	_, err = w2db.RemoveGrid(db, req, w2db.RemoveGridOptions{
 		From:    "todo",
 		IDField: "id",
-		Flavor:  sqlbuilder.SQLite,
 	})
 
 	if err != nil {
@@ -247,7 +245,6 @@ func getTodoForm(w http.ResponseWriter, r *http.Request) {
 			"t.status_id",
 			"s.name as status_name",
 		},
-		Flavor: sqlbuilder.SQLite,
 		BuildSelect: func(sb *sqlbuilder.SelectBuilder) {
 			sb.JoinWithOption(sqlbuilder.LeftJoin, "status as s", "s.id = t.status_id")
 		},
@@ -289,7 +286,6 @@ func postTodoForm(w http.ResponseWriter, r *http.Request) {
 			Into:   "todo",
 			Cols:   []string{"name", "description", "quantity", "status_id"},
 			Values: []any{req.Record.Name, req.Record.Description, req.Record.Quantity, req.Record.Status.ID},
-			Flavor: sqlbuilder.SQLite,
 		})
 		if err != nil {
 			res := w2.NewErrorResponse(err.Error())
@@ -303,7 +299,6 @@ func postTodoForm(w http.ResponseWriter, r *http.Request) {
 			IDField: "id",
 			Cols:    []string{"name", "description", "quantity", "status_id"},
 			Values:  []any{req.Record.Name, req.Record.Description, req.Record.Quantity, req.Record.Status.ID},
-			Flavor:  sqlbuilder.SQLite,
 		})
 		if err != nil {
 			res := w2.NewErrorResponse(err.Error())
@@ -329,7 +324,6 @@ func getStatusDropdown(w http.ResponseWriter, r *http.Request) {
 		IDField:      "id",
 		TextField:    "name",
 		OrderByField: "position",
-		Flavor:       sqlbuilder.SQLite,
 	})
 
 	if err != nil {
@@ -352,7 +346,6 @@ func getStatusGridRecords(w http.ResponseWriter, r *http.Request) {
 	res, err := w2db.GetGrid(db, req, w2db.GetGridOptions[Status]{
 		From:   "status",
 		Select: []string{"id", "name"},
-		Flavor: sqlbuilder.SQLite,
 		BuildSelect: func(sb *sqlbuilder.SelectBuilder) {
 			sb.OrderByAsc("position").OrderByDesc("id")
 		},
@@ -383,7 +376,6 @@ func postStatusGridReorder(w http.ResponseWriter, r *http.Request) {
 			Update:   "status",
 			IDField:  "id",
 			SetField: "position",
-			Flavor:   sqlbuilder.SQLite,
 		})
 		return err
 	})

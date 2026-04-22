@@ -44,7 +44,7 @@ func GetDropdownContext(ctx context.Context, db QueryDB, req w2.GetDropdownReque
 
 	flavor := opts.Flavor
 	if flavor == 0 {
-		flavor = sqlbuilder.DefaultFlavor
+		flavor = defaultFlavor
 	}
 
 	logger := opts.Logger

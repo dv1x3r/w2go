@@ -37,7 +37,7 @@ func RemoveGridContext(ctx context.Context, db ExecDB, req w2.RemoveGridRequest,
 
 	flavor := opts.Flavor
 	if flavor == 0 {
-		flavor = sqlbuilder.DefaultFlavor
+		flavor = defaultFlavor
 	}
 
 	logger := opts.Logger
