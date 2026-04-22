@@ -183,9 +183,8 @@ res, err := w2db.GetGrid(db, req, w2db.GetGridOptions[Todo]{
     Select:         []string{"t.id", "t.name", "t.description"},
     WhereMapping:   map[string]string{"id": "t.id", "name": "t.name"},
     OrderByMapping: map[string]string{"id": "t.id", "name": "t.name"},
-    Scan: func(rows *sql.Rows) (Todo, error) {
-        var r Todo
-        return r, rows.Scan(&r.ID, &r.Name, &r.Description)
+    Scan: func(rows *sql.Rows, record *Todo) error {
+        return rows.Scan(&record.ID, &record.Name, &record.Description)
     },
 })
 
@@ -222,9 +221,8 @@ res, err := w2db.GetForm(db, req, w2db.GetFormOptions[Todo]{
     From:    "todo",
     IDField: "id",
     Select:  []string{"id", "name", "description"},
-    Scan: func(row *sql.Row) (Todo, error) {
-        var r Todo
-        return r, row.Scan(&r.ID, &r.Name, &r.Description)
+    Scan: func(row *sql.Row, record *Todo) error {
+        return row.Scan(&record.ID, &record.Name, &record.Description)
     },
 })
 

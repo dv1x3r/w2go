@@ -150,9 +150,8 @@ func getTodoGridRecords(w http.ResponseWriter, r *http.Request) {
 		BuildBase: func(sb *sqlbuilder.SelectBuilder) {
 			sb.JoinWithOption(sqlbuilder.LeftJoin, "status as s", "s.id = t.status_id")
 		},
-		Scan: func(rows *sql.Rows) (Todo, error) {
-			var record Todo
-			return record, rows.Scan(
+		Scan: func(rows *sql.Rows, record *Todo) error {
+			return rows.Scan(
 				&record.ID,
 				&record.Name,
 				&record.Description,
@@ -252,9 +251,8 @@ func getTodoForm(w http.ResponseWriter, r *http.Request) {
 		BuildSelect: func(sb *sqlbuilder.SelectBuilder) {
 			sb.JoinWithOption(sqlbuilder.LeftJoin, "status as s", "s.id = t.status_id")
 		},
-		Scan: func(row *sql.Row) (Todo, error) {
-			var record Todo
-			return record, row.Scan(
+		Scan: func(row *sql.Row, record *Todo) error {
+			return row.Scan(
 				&record.ID,
 				&record.Name,
 				&record.Description,
@@ -358,9 +356,8 @@ func getStatusGridRecords(w http.ResponseWriter, r *http.Request) {
 		BuildSelect: func(sb *sqlbuilder.SelectBuilder) {
 			sb.OrderByAsc("position").OrderByDesc("id")
 		},
-		Scan: func(rows *sql.Rows) (Status, error) {
-			var record Status
-			return record, rows.Scan(&record.ID, &record.Name)
+		Scan: func(rows *sql.Rows, record *Status) error {
+			return rows.Scan(&record.ID, &record.Name)
 		},
 	})
 

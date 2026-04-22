@@ -18,7 +18,7 @@ type GetFormOptions[T any] struct {
 	Select      []string
 	Flavor      sqlbuilder.Flavor
 	BuildSelect func(sb *sqlbuilder.SelectBuilder)
-	Scan        func(row *sql.Row) (T, error)
+	Scan        func(row *sql.Row, record *T) error
 	Logger      *slog.Logger
 }
 
@@ -61,9 +61,11 @@ func GetFormContext[T any](ctx context.Context, db QueryDB, req w2.GetFormReques
 	builder.Where(builder.EQ(opts.IDField, req.RecID))
 	query, args := builder.BuildWithFlavor(flavor)
 
+	var record T
+
 	begin := time.Now()
 	row := db.QueryRowContext(ctx, query, args...)
-	record, err := opts.Scan(row)
+	err := opts.Scan(row, &record)
 	traceSQL(ctx, logger, begin, query, args, err)
 	if err != nil {
 		return w2.GetFormResponse[T]{}, fmt.Errorf("scan: %w", err)

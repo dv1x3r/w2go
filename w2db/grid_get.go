@@ -22,7 +22,7 @@ type GetGridOptions[T any] struct {
 	Flavor         sqlbuilder.Flavor
 	BuildBase      func(sb *sqlbuilder.SelectBuilder)
 	BuildSelect    func(sb *sqlbuilder.SelectBuilder)
-	Scan           func(rows *sql.Rows) (T, error)
+	Scan           func(rows *sql.Rows, record *T) error
 	Logger         *slog.Logger
 }
 
@@ -110,8 +110,8 @@ func GetGridContext[T any](ctx context.Context, db QueryDB, req w2.GetGridReques
 	records = make([]T, 0, capacity)
 
 	for rows.Next() {
-		record, err := opts.Scan(rows)
-		if err != nil {
+		var record T
+		if err := opts.Scan(rows, &record); err != nil {
 			traceSQL(ctx, logger, begin, query, args, err)
 			return w2.GetGridResponse[T]{}, fmt.Errorf("scan: %w", err)
 		}
