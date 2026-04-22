@@ -28,7 +28,7 @@ var db *sql.DB
 
 var readonly *bool
 
-func protect(next func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+func protect(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if *readonly {
 			res := w2.NewErrorResponse("running in readonly mode")
@@ -37,6 +37,19 @@ func protect(next func(http.ResponseWriter, *http.Request)) func(http.ResponseWr
 		}
 		next(w, r)
 	}
+}
+
+func cors(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 type Todo struct {
@@ -134,7 +147,7 @@ func main() {
 
 	address := fmt.Sprintf("%s:%d", *addr, *port)
 	log.Println("listening on: " + address + mode)
-	if err := http.ListenAndServe(address, router); err != nil {
+	if err := http.ListenAndServe(address, cors(router)); err != nil {
 		log.Fatalln(err)
 	}
 }
