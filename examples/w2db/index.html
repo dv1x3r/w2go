@@ -265,6 +265,7 @@
             size: '250px',
           },
         ],
+        onDelete: function (event) {event.preventDefault()},
         onReorderRow: function (event) {helpers.w2reorder(event, {url: '/api/v1/status/grid/reorder'})},
       })
     }
