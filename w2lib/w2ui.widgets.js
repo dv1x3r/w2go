@@ -20,6 +20,9 @@ export function createSqlExplorerLayout(opts = {}) {
       toolbar: false,
       lineNumbers: true,
     },
+    onDelete: function(event) {
+      event.preventDefault()
+    },
   })
 
   const sidebar = new w2sidebar({
