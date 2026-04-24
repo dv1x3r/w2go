@@ -1,6 +1,7 @@
 import { w2grid, w2layout, w2sidebar, w2utils } from './w2ui.es6.min.js'
 import * as helpers from './w2ui.helpers.js'
 
+const sqlQueryStorageKey = 'w2ui-sql-explorer-query'
 const vimModeStorageKey = 'w2ui-sql-explorer-vim-mode'
 
 export function createSqlExplorerLayout(opts = {}) {
@@ -114,9 +115,12 @@ export function createSqlExplorerLayout(opts = {}) {
     toolbar.enable('cancel')
 
     const query = editor.getSelection() || editor.getValue()
-    const startTime = performance.now()
+    try {
+      localStorage.setItem(sqlQueryStorageKey, query)
+    } catch (_err) { }
 
     try {
+      const startTime = performance.now()
       const result = await helpers.w2fetch({
         owner: grid,
         lock: 'Executing...',
@@ -189,10 +193,19 @@ export function createSqlExplorerLayout(opts = {}) {
             },
             { type: 'spacer' },
             {
+              type: 'button',
+              id: 'reopen',
+              text: 'Reopen last query',
+              onClick: function() {
+                editor.setValue(localStorage.getItem(sqlQueryStorageKey) ?? '')
+              },
+            },
+            {
               type: 'check',
               id: 'vim',
               text: 'Vim Mode',
               tooltip: 'Ctrl-` for maximum efficiency',
+              icon: 'fa-brands fa-vim',
               checked: isVimModeEnabled(),
               onClick: async function(event) {
                 await event.complete

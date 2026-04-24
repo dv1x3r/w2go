@@ -25,9 +25,6 @@ export function onDarkThemeChange(listener) {
 }
 
 export function w2init() {
-  try {
-    setDarkTheme(localStorage.getItem(darkThemeStorageKey) == 'dark')
-  } catch (_err) { }
   window.w2ui = w2ui
   window.w2tooltip = w2tooltip
   w2utils.settings.dataType = 'JSON'
@@ -55,6 +52,7 @@ export function w2init() {
     const src = w2utils.encodeTags(extra.value)
     return extra.value == '' ? null : `<img src="${src}" style="max-width: 72px; max-height: 72px; margin: auto;"/>`
   }
+  setDarkTheme(localStorage.getItem(darkThemeStorageKey) == 'dark')
 }
 
 export async function w2fetch(opts = {}) {
