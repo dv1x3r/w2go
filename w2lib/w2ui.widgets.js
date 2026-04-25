@@ -250,7 +250,7 @@ export function createSqlExplorerLayout(opts = {}) {
     panels: [
       {
         type: 'left',
-        size: 240,
+        size: 250,
         html: sidebar,
       },
       {
