@@ -3,6 +3,19 @@ import { w2ui, w2tooltip, w2utils } from './w2ui.es6.min.js'
 const darkThemeStorageKey = 'w2ui-theme'
 const darkThemeChangeEvent = 'w2ui:dark-theme-change'
 
+export const localeWeekStartsStorageKey = 'w2ui-locale-week-starts'
+export const localeDateFormatStorageKey = 'w2ui-locale-date-format'
+export const localeDatetimeFormatStorageKey = 'w2ui-locale-datetime-format'
+export const localeTimeFormatStorageKey = 'w2ui-locale-time-format'
+
+export function getStorageItem(key) {
+  try {
+    return localStorage.getItem(key)
+  } catch (_err) {
+    return null
+  }
+}
+
 export function isDarkTheme() {
   return document.documentElement.classList.contains('dark')
 }
@@ -52,7 +65,17 @@ export function w2init() {
     const src = w2utils.encodeTags(extra.value)
     return extra.value == '' ? null : `<img src="${src}" style="max-width: 72px; max-height: 72px; margin: auto;"/>`
   }
-  setDarkTheme(localStorage.getItem(darkThemeStorageKey) == 'dark')
+  setDarkTheme(getStorageItem(darkThemeStorageKey) == 'dark')
+}
+
+export function w2initLocale(opts = {}) {
+  const { defaultWeekStarts, defaultDateFormat, defaultDatetimeFormat, defaultTimeFormat } = opts
+  w2utils.locale({
+    weekStarts: getStorageItem(localeWeekStartsStorageKey) ?? defaultWeekStarts ?? 'S',
+    dateFormat: getStorageItem(localeDateFormatStorageKey) ?? defaultDateFormat ?? 'yyyy-MM-dd',
+    datetimeFormat: getStorageItem(localeDatetimeFormatStorageKey) ?? defaultDatetimeFormat ?? 'yyyy-MM-dd hh24:mi:ss',
+    timeFormat: getStorageItem(localeTimeFormatStorageKey) ?? defaultTimeFormat ?? 'hh24:mi:ss',
+  })
 }
 
 export async function w2fetch(opts = {}) {

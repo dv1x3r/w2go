@@ -1,8 +1,95 @@
-import { w2grid, w2layout, w2sidebar, w2utils } from './w2ui.es6.min.js'
+import { w2form, w2grid, w2layout, w2popup, w2sidebar, w2utils } from './w2ui.es6.min.js'
 import * as helpers from './w2ui.helpers.js'
 
 const sqlQueryStorageKey = 'w2ui-sql-explorer-query'
 const vimModeStorageKey = 'w2ui-sql-explorer-vim-mode'
+
+export function openLocalePopup() {
+  const form = new w2form({
+    name: `w2localeForm`,
+    fields: [
+      {
+        field: 'week',
+        type: 'text',
+        html: {
+          label: 'Week Starts',
+          attr: 'style="width:100%;" placeholder="S"',
+          span: 5,
+        },
+      },
+      {
+        field: 'date',
+        type: 'text',
+        html: {
+          label: 'Date Format',
+          attr: 'style="width:100%;" placeholder="yyyy-MM-dd"',
+          span: 5,
+        },
+      },
+      {
+        field: 'datetime',
+        type: 'text',
+        html: {
+          label: 'Datetime Format',
+          attr: 'style="width:100%;" placeholder="yyyy-MM-dd hh24:mi:ss"',
+          span: 5,
+        },
+      },
+      {
+        field: 'time',
+        type: 'text',
+        html: {
+          label: 'Time Format',
+          attr: 'style="width:100%;" placeholder="hh24:mi:ss"',
+          span: 5,
+        },
+      },
+    ],
+    record: {
+      week: helpers.getStorageItem(helpers.localeWeekStartsStorageKey),
+      date: helpers.getStorageItem(helpers.localeDateFormatStorageKey),
+      datetime: helpers.getStorageItem(helpers.localeDatetimeFormatStorageKey),
+      time: helpers.getStorageItem(helpers.localeTimeFormatStorageKey),
+    },
+    actions: {
+      Save() {
+        try {
+          if (this.record.week) {
+            localStorage.setItem(helpers.localeWeekStartsStorageKey, this.record.week)
+          } else {
+            localStorage.removeItem(helpers.localeWeekStartsStorageKey)
+          }
+          if (this.record.date) {
+            localStorage.setItem(helpers.localeDateFormatStorageKey, this.record.date)
+          } else {
+            localStorage.removeItem(helpers.localeDateFormatStorageKey)
+          }
+          if (this.record.datetime) {
+            localStorage.setItem(helpers.localeDatetimeFormatStorageKey, this.record.datetime)
+          } else {
+            localStorage.removeItem(helpers.localeDatetimeFormatStorageKey)
+          }
+          if (this.record.time) {
+            localStorage.setItem(helpers.localeTimeFormatStorageKey, this.record.time)
+          } else {
+            localStorage.removeItem(helpers.localeTimeFormatStorageKey)
+          }
+          helpers.w2initLocale()
+        } catch (_err) { }
+        w2popup.close()
+      },
+      Cancel() { w2popup.close() },
+    },
+  })
+
+  w2popup.open({
+    title: 'Locale Settings',
+    body: '<div id="w2locale-form" style="width: 100%; height: 100%;"></div>',
+    width: 400, height: 300, showMax: false, resizable: false,
+  })
+    .then(() => form.render('#w2locale-form'))
+    .close(() => form.destroy())
+}
 
 export function createSqlExplorerLayout(opts = {}) {
   const { url, darkTheme = 'dracula', initialQuery = '' } = opts
