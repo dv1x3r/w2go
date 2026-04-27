@@ -117,6 +117,22 @@ export function createSqlExplorerLayout(opts = {}) {
     name: 'sqlExplorerSidebar-' + Date.now(),
     levelPadding: 8,
     topHTML: '<div style="margin-top:2px;padding:3px 5px;height:36px;"><input id="sql-explorer-search" class="w2ui-input" style="width:100%;" placeholder="Search..."></div>',
+    onContextMenu: function(event) {
+      const isTableNode = event.object?.query != null
+      this.menu = isTableNode ? [{
+        id: 'select-1000-rows',
+        text: 'SELECT 1000 Rows',
+      }] : []
+    },
+    onMenuClick: async function(event) {
+      if (event.detail.item?.id == 'select-1000-rows') {
+        const node = this.get(event.target)
+        const query = node.query
+        editor.setValue(query)
+        editor.focus()
+        await executeQuery(query)
+      }
+    },
     onRender: async function(event) {
       await event.complete
       const search = helpers.registerSidebarSearch(sidebar)
@@ -143,6 +159,14 @@ export function createSqlExplorerLayout(opts = {}) {
     }
   }
 
+  function buildSelectRowsQuery(dbName, dbTable, dbColumns) {
+    const quote = value => `"${String(value).replaceAll('"', '""')}"`
+    const database = quote(dbName)
+    const table = quote(dbTable)
+    const columns = dbColumns.map(col => `\t${quote(col.name)}`).join(',\n')
+    return `SELECT\n${columns}\nFROM ${database}.${table}\nLIMIT 1000;`
+  }
+
   function setSchemaSidebar(schema) {
     sidebar.nodes = schema.databases.map((db, dbIndex) => ({
       id: `db-${dbIndex}`,
@@ -160,6 +184,7 @@ export function createSqlExplorerLayout(opts = {}) {
             text: table.name,
             icon: 'fa fa-table',
             expanded: false,
+            query: buildSelectRowsQuery(db.name, table.name, table.columns),
             nodes: table.columns.map((col, colIndex) => ({
               id: `db-${dbIndex}-table-${tableIndex}-col-${colIndex}`,
               text: `${col.name}${col.type ? ` (${col.type})` : ''}`,
@@ -189,7 +214,7 @@ export function createSqlExplorerLayout(opts = {}) {
     editor.setOption('hintOptions', { tables })
   }
 
-  async function executeQuery() {
+  async function executeQuery(queryOverride = null) {
     if (isRunning) {
       return
     }
@@ -201,7 +226,7 @@ export function createSqlExplorerLayout(opts = {}) {
     toolbar.disable('run')
     toolbar.enable('cancel')
 
-    const query = editor.getSelection() || editor.getValue()
+    const query = queryOverride ?? (editor.getSelection() || editor.getValue())
     try {
       localStorage.setItem(sqlQueryStorageKey, query)
     } catch (_err) { }
