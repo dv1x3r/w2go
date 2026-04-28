@@ -171,16 +171,25 @@ export function boolOptions() {
   return { items: [{ id: '1', text: 'True' }, { id: '0', text: 'False' }] }
 }
 
-export function remoteListOptions(url, cacheMax = 500) {
+export function remoteListOptions(url, opts = {}) {
+  const {
+    type = 'list',
+    recId = 'id',
+    match = 'contains',
+    align = 'left',
+    cacheMax = 500,
+    minLength = 0,
+    openOnFocus = true,
+  } = opts
   return {
     url: url,
-    type: 'list',
-    recId: 'id',
-    match: 'contains',
-    align: 'left',
+    type: type,
+    recId: recId,
+    match: match,
+    align: align,
     cacheMax: cacheMax,
-    minLength: 0,
-    openOnFocus: true,
+    minLength: minLength,
+    openOnFocus: openOnFocus,
     renderDrop: value => w2utils.encodeTags(value?.text),
   }
 }
