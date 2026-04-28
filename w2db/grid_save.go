@@ -2,6 +2,7 @@ package w2db
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -22,6 +23,30 @@ func SaveGrid[T any](db ExecDB, req w2.SaveGridRequest[T], opts SaveGridOptions[
 }
 
 func SaveGridContext[T any](ctx context.Context, db ExecDB, req w2.SaveGridRequest[T], opts SaveGridOptions[T]) (int, error) {
+	// save requires a transaction for multiple row update,
+	// but SQLite does not support nested transactions,
+	// so begin one if db is not already a *sql.Tx transaction
+	if sqlDB, ok := db.(*sql.DB); ok {
+		// fmt.Println("begin tx")
+		tx, err := sqlDB.BeginTx(ctx, nil)
+		if err != nil {
+			return 0, err
+		}
+		defer tx.Rollback()
+
+		affected, err := saveGridContext(ctx, tx, req, opts)
+		if err != nil {
+			return 0, err
+		}
+
+		return affected, tx.Commit()
+	} else {
+		// db is already a *sql.Tx transaction
+		return saveGridContext(ctx, db, req, opts)
+	}
+}
+
+func saveGridContext[T any](ctx context.Context, db ExecDB, req w2.SaveGridRequest[T], opts SaveGridOptions[T]) (int, error) {
 	if opts.BuildUpdate == nil {
 		return 0, errors.New("opts.BuildUpdate is required")
 	}

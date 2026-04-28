@@ -259,17 +259,8 @@ res, err := w2db.GetDropdown(db, req, w2db.GetDropdownOptions{
 `w2db.WithinTransaction` handles begin, commit, and rollback. Pass the `*sql.Tx` directly into any `w2db` function since they all accept the `ExecDB` / `QueryExecDB` interface:
 
 ```go
-// SaveGrid loops over all changes - wrap in a transaction so the batch is atomic
 err := w2db.WithinTransaction(db, func(tx *sql.Tx) error {
-    _, err := w2db.SaveGrid(tx, req, w2db.SaveGridOptions[Todo]{
-        BuildUpdate: func(change Todo) *sqlbuilder.UpdateBuilder {
-            ub := sqlbuilder.Update("todo")
-            ub.Where(ub.EQ("id", change.ID))
-            w2sql.Set(ub, change.Quantity, "quantity")
-            return ub
-        },
-    })
-    return err
+    return nil
 })
 ```
 
@@ -277,8 +268,7 @@ err := w2db.WithinTransaction(db, func(tx *sql.Tx) error {
 
 ```go
 err := w2db.WithinTransactionContext(ctx, db, func(ctx context.Context, tx *sql.Tx) error {
-    _, err := w2db.SaveGridContext(ctx, tx, req, opts)
-    return err
+    return nil
 })
 ```
 

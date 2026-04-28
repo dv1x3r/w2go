@@ -2,6 +2,7 @@ package w2db
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -27,6 +28,30 @@ func ReorderGrid(db QueryExecDB, req w2.ReorderGridRequest, opts ReorderGridOpti
 }
 
 func ReorderGridContext(ctx context.Context, db QueryExecDB, req w2.ReorderGridRequest, opts ReorderGridOptions) (int, error) {
+	// reorder requires a transaction for the two-step update,
+	// but SQLite does not support nested transactions,
+	// so begin one if db is not already a *sql.Tx transaction
+	if sqlDB, ok := db.(*sql.DB); ok {
+		// fmt.Println("begin tx")
+		tx, err := sqlDB.BeginTx(ctx, nil)
+		if err != nil {
+			return 0, err
+		}
+		defer tx.Rollback()
+
+		affected, err := reorderGridContext(ctx, tx, req, opts)
+		if err != nil {
+			return 0, err
+		}
+
+		return affected, tx.Commit()
+	} else {
+		// db is already a *sql.Tx transaction
+		return reorderGridContext(ctx, db, req, opts)
+	}
+}
+
+func reorderGridContext(ctx context.Context, db QueryExecDB, req w2.ReorderGridRequest, opts ReorderGridOptions) (int, error) {
 	if opts.Update == "" {
 		return 0, errors.New("opts.Update is required")
 	}
@@ -90,7 +115,8 @@ func ReorderGridContext(ctx context.Context, db QueryExecDB, req w2.ReorderGridR
 
 	whenClauses := make([]string, len(ids))
 	for i, id := range ids {
-		whenClauses[i] = fmt.Sprintf("WHEN %d THEN %d", id, i+1)
+		// Set negative positions to avoid unique constraint conflicts
+		whenClauses[i] = fmt.Sprintf("WHEN %d THEN %d", id, (i+1)*-1)
 	}
 
 	setClause := fmt.Sprintf("CASE %s %s ELSE %s END",
@@ -103,10 +129,23 @@ func ReorderGridContext(ctx context.Context, db QueryExecDB, req w2.ReorderGridR
 	query, args = updateBuilder.BuildWithFlavor(flavor)
 
 	begin = time.Now()
-	result, err := db.ExecContext(ctx, query, args...)
+	_, err = db.ExecContext(ctx, query, args...)
 	traceSQL(ctx, logger, begin, query, args, err)
 	if err != nil {
 		return 0, fmt.Errorf("update: %w", err)
+	}
+
+	// Set final positive positions
+	swapBuilder := sqlbuilder.Update(opts.Update)
+	swapBuilder.Set(swapBuilder.Assign(opts.SetField, sqlbuilder.Raw(opts.SetField+"*-1")))
+	swapBuilder.Where(swapBuilder.In(opts.IDField, sqlbuilder.List(ids)))
+	query, args = swapBuilder.BuildWithFlavor(flavor)
+
+	begin = time.Now()
+	result, err := db.ExecContext(ctx, query, args...)
+	traceSQL(ctx, logger, begin, query, args, err)
+	if err != nil {
+		return 0, fmt.Errorf("swap: %w", err)
 	}
 
 	affected, _ := result.RowsAffected()

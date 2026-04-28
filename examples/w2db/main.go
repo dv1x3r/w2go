@@ -216,18 +216,15 @@ func postTodoGridSave(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = w2db.WithinTransaction(db, func(tx *sql.Tx) error {
-		_, err := w2db.SaveGrid(tx, req, w2db.SaveGridOptions[Todo]{
-			BuildUpdate: func(change Todo) *sqlbuilder.UpdateBuilder {
-				ub := sqlbuilder.Update("todo")
-				ub.Where(ub.EQ("id", change.ID))
-				w2sql.SetNotNull(ub, change.Description, "description")
-				w2sql.Set(ub, change.Quantity, "quantity")
-				w2sql.Set(ub, change.Status.ID, "status_id")
-				return ub
-			},
-		})
-		return err
+	_, err = w2db.SaveGrid(db, req, w2db.SaveGridOptions[Todo]{
+		BuildUpdate: func(change Todo) *sqlbuilder.UpdateBuilder {
+			ub := sqlbuilder.Update("todo")
+			ub.Where(ub.EQ("id", change.ID))
+			w2sql.SetNotNull(ub, change.Description, "description")
+			w2sql.Set(ub, change.Quantity, "quantity")
+			w2sql.Set(ub, change.Status.ID, "status_id")
+			return ub
+		},
 	})
 
 	if err != nil {
