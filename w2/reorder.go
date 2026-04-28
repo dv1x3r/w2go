@@ -56,18 +56,18 @@ func (req *ReorderGridRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type ReorderManyGridRequest struct {
+type ReorderGridArrayRequest struct {
 	RecID      []int
 	MoveBefore int
 	Bottom     bool
 }
 
-func ParseReorderManyGridRequest(body io.Reader) (ReorderManyGridRequest, error) {
-	var req ReorderManyGridRequest
+func ParseReorderGridArrayRequest(body io.Reader) (ReorderGridArrayRequest, error) {
+	var req ReorderGridArrayRequest
 	return req, json.NewDecoder(body).Decode(&req)
 }
 
-func (req ReorderManyGridRequest) MarshalJSON() ([]byte, error) {
+func (req ReorderGridArrayRequest) MarshalJSON() ([]byte, error) {
 	v := struct {
 		RecID      []int `json:"recid"`
 		MoveBefore any   `json:"moveBefore"`
@@ -84,7 +84,7 @@ func (req ReorderManyGridRequest) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v)
 }
 
-func (req *ReorderManyGridRequest) UnmarshalJSON(data []byte) error {
+func (req *ReorderGridArrayRequest) UnmarshalJSON(data []byte) error {
 	if string(data) == "null" || string(data) == `""` {
 		return nil
 	}
