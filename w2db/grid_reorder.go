@@ -90,7 +90,7 @@ func ReorderGridContext(ctx context.Context, db QueryExecDB, req w2.ReorderGridR
 
 	whenClauses := make([]string, len(ids))
 	for i, id := range ids {
-		whenClauses[i] = fmt.Sprintf("WHEN %d THEN %d", id, i)
+		whenClauses[i] = fmt.Sprintf("WHEN %d THEN %d", id, i+1)
 	}
 
 	setClause := fmt.Sprintf("CASE %s %s ELSE %s END",
