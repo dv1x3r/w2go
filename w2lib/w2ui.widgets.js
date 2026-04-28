@@ -121,7 +121,8 @@ export function createSqlExplorerLayout(opts = {}) {
       const isTableNode = event.object?.query != null
       this.menu = isTableNode ? [{
         id: 'select-1000-rows',
-        text: 'SELECT 1000 Rows',
+        text: 'Select Top 1000 Rows',
+        icon: 'fa fa-arrow-pointer',
       }] : []
     },
     onMenuClick: async function(event) {
