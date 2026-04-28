@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/dv1x3r/w2go/w2"
@@ -87,23 +88,27 @@ func ReorderGridContext(ctx context.Context, db QueryExecDB, req w2.ReorderGridR
 		return 0, fmt.Errorf("reorder: %w", err)
 	}
 
-	affected := 0
-
+	whenClauses := make([]string, len(ids))
 	for i, id := range ids {
-		updateBuilder := sqlbuilder.Update(opts.Update)
-		updateBuilder.Set(updateBuilder.Assign(opts.SetField, i))
-		updateBuilder.Where(updateBuilder.EQ(opts.IDField, id))
-		query, args := updateBuilder.BuildWithFlavor(flavor)
-		begin := time.Now()
-		result, err := db.ExecContext(ctx, query, args...)
-		traceSQL(ctx, logger, begin, query, args, err)
-		if err != nil {
-			return 0, fmt.Errorf("update [%d]: %w", i, err)
-		}
-		if n, err := result.RowsAffected(); err == nil {
-			affected += int(n)
-		}
+		whenClauses[i] = fmt.Sprintf("WHEN %d THEN %d", id, i)
 	}
 
-	return affected, nil
+	setClause := fmt.Sprintf("CASE %s %s ELSE %s END",
+		opts.IDField, strings.Join(whenClauses, " "), opts.SetField,
+	)
+
+	updateBuilder := sqlbuilder.Update(opts.Update)
+	updateBuilder.Set(updateBuilder.Assign(opts.SetField, sqlbuilder.Raw(setClause)))
+	updateBuilder.Where(updateBuilder.In(opts.IDField, sqlbuilder.List(ids)))
+	query, args = updateBuilder.BuildWithFlavor(flavor)
+
+	begin = time.Now()
+	result, err := db.ExecContext(ctx, query, args...)
+	traceSQL(ctx, logger, begin, query, args, err)
+	if err != nil {
+		return 0, fmt.Errorf("update: %w", err)
+	}
+
+	affected, _ := result.RowsAffected()
+	return int(affected), nil
 }

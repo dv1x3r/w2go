@@ -205,8 +205,8 @@ affected, err := w2db.RemoveGrid(db, req, w2db.RemoveGridOptions{
     IDField: "id",
 })
 
-// Reorder rows by updating a position column - pass a *sql.Tx for consistency
-affected, err := w2db.ReorderGrid(tx, req, w2db.ReorderGridOptions{
+// Reorder rows by updating a position column
+affected, err := w2db.ReorderGrid(db, req, w2db.ReorderGridOptions{
     Update:   "status",
     IDField:  "id",
     SetField: "position",
@@ -268,16 +268,6 @@ err := w2db.WithinTransaction(db, func(tx *sql.Tx) error {
             w2sql.Set(ub, change.Quantity, "quantity")
             return ub
         },
-    })
-    return err
-})
-
-// ReorderGrid issues one UPDATE per row - wrap in a transaction for consistency
-err := w2db.WithinTransaction(db, func(tx *sql.Tx) error {
-    _, err := w2db.ReorderGrid(tx, req, w2db.ReorderGridOptions{
-        Update:   "status",
-        IDField:  "id",
-        SetField: "position",
     })
     return err
 })

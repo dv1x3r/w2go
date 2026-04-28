@@ -408,13 +408,10 @@ func postStatusGridReorder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = w2db.WithinTransaction(db, func(tx *sql.Tx) error {
-		_, err := w2db.ReorderGrid(tx, req, w2db.ReorderGridOptions{
-			Update:   "status",
-			IDField:  "id",
-			SetField: "position",
-		})
-		return err
+	_, err = w2db.ReorderGrid(db, req, w2db.ReorderGridOptions{
+		Update:   "status",
+		IDField:  "id",
+		SetField: "position",
 	})
 
 	if err != nil {
