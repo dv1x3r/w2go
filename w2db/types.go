@@ -5,16 +5,12 @@ import (
 	"database/sql"
 )
 
-type QueryDB interface {
+type QueryExecer interface {
 	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
 	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
-}
-
-type ExecDB interface {
 	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
 }
 
-type QueryExecDB interface {
-	QueryDB
-	ExecDB
+type Providable interface {
+	IsProvided() bool
 }

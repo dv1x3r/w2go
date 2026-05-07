@@ -14,7 +14,6 @@ import (
 	"github.com/dv1x3r/w2go/w2"
 	"github.com/dv1x3r/w2go/w2db"
 	"github.com/dv1x3r/w2go/w2lib"
-	"github.com/dv1x3r/w2go/w2sql"
 	"github.com/dv1x3r/w2go/w2widget"
 
 	"github.com/huandu/go-sqlbuilder"
@@ -217,13 +216,14 @@ func postTodoGridSave(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err = w2db.SaveGrid(db, req, w2db.SaveGridOptions[Todo]{
-		BuildUpdate: func(change Todo) *sqlbuilder.UpdateBuilder {
-			ub := sqlbuilder.Update("todo")
-			ub.Where(ub.EQ("id", change.ID))
-			w2sql.SetNotNull(ub, change.Description, "description")
-			w2sql.Set(ub, change.Quantity, "quantity")
-			w2sql.Set(ub, change.Status.ID, "status_id")
-			return ub
+		BuildOptions: func(change Todo) w2db.UpdateOptions {
+			return w2db.UpdateOptions{
+				Update:  "todo",
+				Cols:    []string{"description", "quantity", "status_id"},
+				Values:  []any{change.Description.NotNull(), change.Quantity, change.Status.ID},
+				IDField: "id",
+				IDValue: change.ID,
+			}
 		},
 	})
 
@@ -316,10 +316,10 @@ func postTodoForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.RecID == 0 {
-		recID, err := w2db.InsertForm(db, req, w2db.InsertFormOptions{
+		recID, err := w2db.Insert(db, w2db.InsertOptions{
 			Into:   "todo",
 			Cols:   []string{"name", "description", "quantity", "status_id"},
-			Values: []any{req.Record.Name, req.Record.Description, req.Record.Quantity, req.Record.Status.ID},
+			Values: []any{req.Record.Name, req.Record.Description.NotNull(), req.Record.Quantity, req.Record.Status.ID},
 		})
 		if err != nil {
 			res := w2.NewErrorResponse(err.Error())
@@ -328,11 +328,12 @@ func postTodoForm(w http.ResponseWriter, r *http.Request) {
 		}
 		req.RecID = recID
 	} else {
-		_, err := w2db.UpdateForm(db, req, w2db.UpdateFormOptions{
+		_, err := w2db.Update(db, w2db.UpdateOptions{
 			Update:  "todo",
-			IDField: "id",
 			Cols:    []string{"name", "description", "quantity", "status_id"},
-			Values:  []any{req.Record.Name, req.Record.Description, req.Record.Quantity, req.Record.Status.ID},
+			Values:  []any{req.Record.Name, req.Record.Description.NotNull(), req.Record.Quantity, req.Record.Status.ID},
+			IDField: "id",
+			IDValue: req.RecID,
 		})
 		if err != nil {
 			res := w2.NewErrorResponse(err.Error())

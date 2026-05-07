@@ -7,11 +7,10 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/dv1x3r/w2go/w2"
 	"github.com/huandu/go-sqlbuilder"
 )
 
-type InsertFormOptions struct {
+type InsertOptions struct {
 	Into   string
 	Cols   []string
 	Values []any
@@ -19,11 +18,11 @@ type InsertFormOptions struct {
 	Logger *slog.Logger
 }
 
-func InsertForm[T any](db ExecDB, req w2.SaveFormRequest[T], opts InsertFormOptions) (int, error) {
-	return InsertFormContext(context.Background(), db, req, opts)
+func Insert(db QueryExecer, opts InsertOptions) (int, error) {
+	return InsertContext(context.Background(), db, opts)
 }
 
-func InsertFormContext[T any](ctx context.Context, db ExecDB, req w2.SaveFormRequest[T], opts InsertFormOptions) (int, error) {
+func InsertContext(ctx context.Context, db QueryExecer, opts InsertOptions) (int, error) {
 	if opts.Into == "" {
 		return 0, errors.New("opts.Into is required")
 	}

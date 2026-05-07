@@ -19,18 +19,18 @@ type GetGridOptions[T any] struct {
 	CountExpr      string
 	WhereMapping   map[string]string
 	OrderByMapping map[string]string
-	Flavor         sqlbuilder.Flavor
 	BuildBase      func(sb *sqlbuilder.SelectBuilder)
 	BuildSelect    func(sb *sqlbuilder.SelectBuilder)
 	Scan           func(rows *sql.Rows, record *T) error
+	Flavor         sqlbuilder.Flavor
 	Logger         *slog.Logger
 }
 
-func GetGrid[T any](db QueryDB, req w2.GetGridRequest, opts GetGridOptions[T]) (w2.GetGridResponse[T], error) {
+func GetGrid[T any](db QueryExecer, req w2.GetGridRequest, opts GetGridOptions[T]) (w2.GetGridResponse[T], error) {
 	return GetGridContext(context.Background(), db, req, opts)
 }
 
-func GetGridContext[T any](ctx context.Context, db QueryDB, req w2.GetGridRequest, opts GetGridOptions[T]) (w2.GetGridResponse[T], error) {
+func GetGridContext[T any](ctx context.Context, db QueryExecer, req w2.GetGridRequest, opts GetGridOptions[T]) (w2.GetGridResponse[T], error) {
 	if opts.From == "" {
 		return w2.GetGridResponse[T]{}, errors.New("opts.From is required")
 	}

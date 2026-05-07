@@ -133,6 +133,10 @@ type Todo struct {
 }
 ```
 
+`w2.Field[T]` implements `w2db.Providable`, so `w2db.Update` skips fields that were not sent by the client.
+
+By default, a sent empty field writes SQL `NULL`; use `field.NotNull()` when an empty field should write the zero value instead.
+
 ### w2sql SQL builder integration
 
 `w2sql` translates w2ui request data into SQL clauses using [`go-sqlbuilder`](https://github.com/huandu/go-sqlbuilder). Field names are mapped through a whitelist to prevent injection.
@@ -157,22 +161,20 @@ query, args := sb.BuildWithFlavor(sqlbuilder.SQLite)
 
 **Applying inline updates**
 
-- `w2sql.Set` - sets the column if the field was provided; writes `NULL` if the value is empty.
-- `w2sql.SetNotNull` - sets the column if the field was provided; writes the zero value if empty.
+`w2sql.Set` sets the column if the field was provided. By default, an empty field writes SQL `NULL`; use `field.NotNull()` when an empty field should write the zero value instead.
 
 ```go
 for _, change := range req.Changes {
     ub := sqlbuilder.Update("todo")
     ub.Where(ub.EQ("id", change.ID))
-    w2sql.SetNotNull(ub, change.Name, "name")
-    w2sql.Set(ub, change.Description, "description")
+    w2sql.Set(ub, change.Description.NotNull(), "description")
     w2sql.Set(ub, change.Quantity, "quantity")
 }
 ```
 
 ### w2db database helpers
 
-`w2db` eliminates the boilerplate of building queries and scanning rows. Each function accepts a `*sql.DB`, `*sql.Tx`, or any value that satisfies the `QueryDB` / `ExecDB` / `QueryExecDB` interface. Every function also has a `Context` variant (e.g. `w2db.GetGridContext`) that accepts a `context.Context` as the first argument.
+`w2db` eliminates the boilerplate of building queries and scanning rows. Each function accepts a `*sql.DB`, `*sql.Tx`, or any value that satisfies the `QueryExecer` interface. Every function also has a `Context` variant (e.g. `w2db.GetGridContext`) that accepts a `context.Context` as the first argument.
 
 **w2grid**
 
@@ -188,14 +190,16 @@ res, err := w2db.GetGrid(db, req, w2db.GetGridOptions[Todo]{
     },
 })
 
-// Save inline edits - pass a *sql.Tx to make the batch atomic
+// Save inline edits
 affected, err := w2db.SaveGrid(tx, req, w2db.SaveGridOptions[Todo]{
-    BuildUpdate: func(change Todo) *sqlbuilder.UpdateBuilder {
-        ub := sqlbuilder.Update("todo")
-        ub.Where(ub.EQ("id", change.ID))
-        w2sql.SetNotNull(ub, change.Name, "name")
-        w2sql.Set(ub, change.Description, "description")
-        return ub
+    BuildOptions: func(change Todo) w2db.UpdateOptions {
+        return w2db.UpdateOptions{
+            Update:  "todo",
+            Cols:    []string{"description", "quantity"},
+            Values:  []any{change.Description.NotNull(), change.Quantity},
+            IDField: "id",
+            IDValue: change.ID,
+        }
     },
 })
 
@@ -227,18 +231,19 @@ res, err := w2db.GetForm(db, req, w2db.GetFormOptions[Todo]{
 })
 
 // Insert a new record
-lastID, err := w2db.InsertForm(db, req, w2db.InsertFormOptions{
+lastID, err := w2db.Insert(db, w2db.InsertOptions{
     Into:   "todo",
     Cols:   []string{"name", "description"},
     Values: []any{req.Record.Name, req.Record.Description},
 })
 
 // Update an existing record
-affected, err := w2db.UpdateForm(db, req, w2db.UpdateFormOptions{
+affected, err := w2db.Update(db, w2db.UpdateOptions{
     Update:  "todo",
-    IDField: "id",
     Cols:    []string{"name", "description"},
     Values:  []any{req.Record.Name, req.Record.Description},
+    IDField: "id",
+    IDValue: req.RecID,
 })
 ```
 
@@ -256,7 +261,7 @@ res, err := w2db.GetDropdown(db, req, w2db.GetDropdownOptions{
 
 **Transactions**
 
-`w2db.WithinTransaction` handles begin, commit, and rollback. Pass the `*sql.Tx` directly into any `w2db` function since they all accept the `ExecDB` / `QueryExecDB` interface:
+`w2db.WithinTransaction` handles begin, commit, and rollback. Pass the `*sql.Tx` directly into any `w2db` function since they all accept the `QueryExecer` interface:
 
 ```go
 err := w2db.WithinTransaction(db, func(tx *sql.Tx) error {

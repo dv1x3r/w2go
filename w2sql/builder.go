@@ -19,14 +19,6 @@ func Set[T any](ub *sqlbuilder.UpdateBuilder, value w2.Field[T], field string) {
 	}
 }
 
-// SetNotNull updates the field only if a value is provided.
-// Unlike Assign, it always sets the field to the provided value even if invalid, using the zero value instead of NULL.
-func SetNotNull[T any](ub *sqlbuilder.UpdateBuilder, value w2.Field[T], field string) {
-	if value.Provided {
-		ub.SetMore(ub.Assign(field, value.V))
-	}
-}
-
 // Limit sets the LIMIT in SELECT based on provided W2GridRequest.
 func Limit(sb *sqlbuilder.SelectBuilder, r w2.GetGridRequest) {
 	if r.Limit != 0 {

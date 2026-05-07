@@ -21,11 +21,11 @@ type GetDropdownOptions struct {
 	Logger       *slog.Logger
 }
 
-func GetDropdown(db QueryDB, req w2.GetDropdownRequest, opts GetDropdownOptions) (w2.GetDropdownResponse[w2.Dropdown], error) {
+func GetDropdown(db QueryExecer, req w2.GetDropdownRequest, opts GetDropdownOptions) (w2.GetDropdownResponse[w2.Dropdown], error) {
 	return GetDropdownContext(context.Background(), db, req, opts)
 }
 
-func GetDropdownContext(ctx context.Context, db QueryDB, req w2.GetDropdownRequest, opts GetDropdownOptions) (w2.GetDropdownResponse[w2.Dropdown], error) {
+func GetDropdownContext(ctx context.Context, db QueryExecer, req w2.GetDropdownRequest, opts GetDropdownOptions) (w2.GetDropdownResponse[w2.Dropdown], error) {
 	if opts.From == "" {
 		return w2.GetDropdownResponse[w2.Dropdown]{}, errors.New("opts.From is required")
 	}

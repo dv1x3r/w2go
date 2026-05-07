@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"encoding/json"
+	"fmt"
 )
 
 // Field wraps sql.Null[T] and tracks whether the value was explicitly provided (e.g., via JSON or SQL).
@@ -21,6 +22,18 @@ func NewField[T any](value T) Field[T] {
 		},
 		Provided: true,
 	}
+}
+
+// NotNull returns a copy that writes the zero value instead of SQL NULL.
+func (f Field[T]) NotNull() Field[T] {
+	f.Valid = true
+	return f
+}
+
+// IsProvided implements the w2db.Providable interface.
+// Ensures SQL Update happens only the field value is provided.
+func (f Field[T]) IsProvided() bool {
+	return f.Provided
 }
 
 // IsZero implements the json.Zeroed interface.
@@ -66,4 +79,12 @@ func (f *Field[T]) Scan(value any) error {
 // Value implements the driver.Valuer interface for Field.
 func (f Field[T]) Value() (driver.Value, error) {
 	return f.Null.Value()
+}
+
+// String implements the fmt.Stringer interface for Field.
+func (f Field[T]) String() string {
+	if !f.Valid {
+		return "<nil>"
+	}
+	return fmt.Sprint(f.V)
 }

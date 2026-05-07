@@ -18,11 +18,11 @@ type RemoveGridOptions struct {
 	Logger  *slog.Logger
 }
 
-func RemoveGrid(db ExecDB, req w2.RemoveGridRequest, opts RemoveGridOptions) (int, error) {
+func RemoveGrid(db QueryExecer, req w2.RemoveGridRequest, opts RemoveGridOptions) (int, error) {
 	return RemoveGridContext(context.Background(), db, req, opts)
 }
 
-func RemoveGridContext(ctx context.Context, db ExecDB, req w2.RemoveGridRequest, opts RemoveGridOptions) (int, error) {
+func RemoveGridContext(ctx context.Context, db QueryExecer, req w2.RemoveGridRequest, opts RemoveGridOptions) (int, error) {
 	if opts.From == "" {
 		return 0, errors.New("opts.From is required")
 	}

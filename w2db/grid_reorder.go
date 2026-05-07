@@ -23,11 +23,11 @@ type ReorderGridOptions struct {
 	Logger     *slog.Logger
 }
 
-func ReorderGrid(db QueryExecDB, req w2.ReorderGridRequest, opts ReorderGridOptions) (int, error) {
+func ReorderGrid(db QueryExecer, req w2.ReorderGridRequest, opts ReorderGridOptions) (int, error) {
 	return ReorderGridContext(context.Background(), db, req, opts)
 }
 
-func ReorderGridContext(ctx context.Context, db QueryExecDB, req w2.ReorderGridRequest, opts ReorderGridOptions) (int, error) {
+func ReorderGridContext(ctx context.Context, db QueryExecer, req w2.ReorderGridRequest, opts ReorderGridOptions) (int, error) {
 	// reorder requires a transaction for the two-step update,
 	// but SQLite does not support nested transactions,
 	// so begin one if db is not already a *sql.Tx transaction
@@ -51,7 +51,7 @@ func ReorderGridContext(ctx context.Context, db QueryExecDB, req w2.ReorderGridR
 	}
 }
 
-func reorderGridContext(ctx context.Context, db QueryExecDB, req w2.ReorderGridRequest, opts ReorderGridOptions) (int, error) {
+func reorderGridContext(ctx context.Context, db QueryExecer, req w2.ReorderGridRequest, opts ReorderGridOptions) (int, error) {
 	if opts.Update == "" {
 		return 0, errors.New("opts.Update is required")
 	}

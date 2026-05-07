@@ -16,17 +16,17 @@ type GetFormOptions[T any] struct {
 	From        string
 	IDField     string
 	Select      []string
-	Flavor      sqlbuilder.Flavor
 	BuildSelect func(sb *sqlbuilder.SelectBuilder)
 	Scan        func(row *sql.Row, record *T) error
+	Flavor      sqlbuilder.Flavor
 	Logger      *slog.Logger
 }
 
-func GetForm[T any](db QueryDB, req w2.GetFormRequest, opts GetFormOptions[T]) (w2.GetFormResponse[T], error) {
+func GetForm[T any](db QueryExecer, req w2.GetFormRequest, opts GetFormOptions[T]) (w2.GetFormResponse[T], error) {
 	return GetFormContext(context.Background(), db, req, opts)
 }
 
-func GetFormContext[T any](ctx context.Context, db QueryDB, req w2.GetFormRequest, opts GetFormOptions[T]) (w2.GetFormResponse[T], error) {
+func GetFormContext[T any](ctx context.Context, db QueryExecer, req w2.GetFormRequest, opts GetFormOptions[T]) (w2.GetFormResponse[T], error) {
 	if opts.From == "" {
 		return w2.GetFormResponse[T]{}, errors.New("opts.From is required")
 	}
