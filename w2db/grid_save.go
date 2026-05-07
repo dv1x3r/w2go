@@ -50,15 +50,14 @@ func saveGridContext[T any](ctx context.Context, db QueryExecer, req w2.SaveGrid
 		return 0, nil
 	}
 
-	affected := 0
+	var affected int
 
 	for i, change := range req.Changes {
-		updateOpts := opts.BuildOptions(change)
-		n, err := UpdateContext(ctx, db, updateOpts)
+		n, err := UpdateContext(ctx, db, opts.BuildOptions(change))
 		if err != nil {
 			return 0, fmt.Errorf("update [%d]: %w", i, err)
 		}
-		affected += int(n)
+		affected += n
 	}
 
 	return affected, nil

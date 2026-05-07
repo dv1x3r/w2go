@@ -11,11 +11,7 @@ import (
 // If the value is marked as valid, it sets the field to the provided value. Otherwise, it sets field to NULL.
 func Set[T any](ub *sqlbuilder.UpdateBuilder, value w2.Field[T], field string) {
 	if value.Provided {
-		if value.Valid {
-			ub.SetMore(ub.Assign(field, value.V))
-		} else {
-			ub.SetMore(ub.Assign(field, nil))
-		}
+		ub.SetMore(ub.Assign(field, value))
 	}
 }
 
@@ -42,14 +38,18 @@ func Where(sb *sqlbuilder.SelectBuilder, r w2.GetGridRequest, mapping map[string
 			switch s.Operator {
 			case "=", "is":
 				c = append(c, sb.EQ(field, s.Value))
-			case ">":
+			case ">", "more":
 				c = append(c, sb.GT(field, s.Value))
 			case "<", "less":
 				c = append(c, sb.LT(field, s.Value))
-			case ">=", "more":
+			case ">=":
 				c = append(c, sb.GTE(field, s.Value))
 			case "<=":
 				c = append(c, sb.LTE(field, s.Value))
+			case "null", "is null":
+				c = append(c, sb.IsNull(field))
+			case "not null":
+				c = append(c, sb.IsNotNull(field))
 			case "begins":
 				if s.Value != "" {
 					if sb.Flavor() == sqlbuilder.SQLite {
