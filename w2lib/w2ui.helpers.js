@@ -61,7 +61,7 @@ export function w2init() {
     let result = ''
     for (const el of extra.value) {
       const text = w2utils.encodeTags(String(el.text ?? ''))
-      result += `<span style="color: var(--w2-text); background-color: var(--w2-surface-muted); border: 1px solid var(--w2-border); border-radius: 15px; margin: 0 3px 0 3px; padding: 2px 12px; font-size: 11px;">${text}</span>`
+      result += `<span style="color: var(--w2-text); background-color: var(--w2-surface-muted, #eff3f5); border: 1px solid var(--w2-border, #b4d0de); border-radius: 15px; margin: 0 3px 0 3px; padding: 2px 12px; font-size: 11px;">${text}</span>`
     }
     return result
   }
