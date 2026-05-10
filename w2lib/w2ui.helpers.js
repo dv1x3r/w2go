@@ -63,7 +63,7 @@ export function w2init() {
       const text = w2utils.encodeTags(String(el.text ?? ''))
       result += `<span style="color: var(--w2-text); background-color: var(--w2-surface-muted); border: 1px solid var(--w2-border); border-radius: 15px; margin: 0 3px 0 3px; padding: 2px 12px; font-size: 11px;">${text}</span>`
     }
-    return `<div>${result}</div>`
+    return result
   }
   w2utils.formatters['icon-small'] = (_, extra) => {
     const src = w2utils.encodeTags(extra.value)
