@@ -57,6 +57,14 @@ export function w2init() {
     const encodedBase64 = btoa(encodeURIComponent(text))
     return extra.value?.text == null ? null : `<span onmouseenter="w2tooltip.show(this, {'html': decodeURIComponent(atob(('${encodedBase64}'))), 'name': 'tooltip'})" onmouseleave="w2tooltip.hide('tooltip')">${text}</span>`
   }
+  w2utils.formatters['dropdown-multi'] = (_, extra) => {
+    let result = ''
+    for (const el of extra.value) {
+      const text = w2utils.encodeTags(String(el.text ?? ''))
+      result += `<span style="color: var(--w2-text); background-color: var(--w2-surface-muted); border: 1px solid var(--w2-border); border-radius: 15px; margin: 0 3px 0 3px; padding: 2px 12px; font-size: 11px;">${text}</span>`
+    }
+    return `<div>${result}</div>`
+  }
   w2utils.formatters['icon-small'] = (_, extra) => {
     const src = w2utils.encodeTags(extra.value)
     return extra.value == '' ? null : `<img src="${src}" style="max-width: 24px; max-height: 24px; margin: auto;"/>`
