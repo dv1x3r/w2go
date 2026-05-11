@@ -6,8 +6,8 @@ Handles request parsing, response serialization, SQL query building, and databas
 
 <table>
   <tr>
-    <td width="50%"><img src="./examples/screenshots/w2grid-light.png" alt="Todo grid example in light theme" /></td>
-    <td width="50%"><img src="./examples/screenshots/w2grid-dark.png" alt="Todo grid example in dark theme" /></td>
+    <td width="50%"><img src="./example/screenshots/w2grid-light.png" alt="Todo grid example in light theme" /></td>
+    <td width="50%"><img src="./example/screenshots/w2grid-dark.png" alt="Todo grid example in dark theme" /></td>
   </tr>
   <tr>
     <td align="center"><em>Todo grid in light theme</em></td>
@@ -24,7 +24,7 @@ Handles request parsing, response serialization, SQL query building, and databas
   - [w2widget built-in widgets](#w2widget-built-in-widgets)
   - [w2file file uploads](#w2file-file-uploads)
   - [w2sort array reordering](#w2sort-array-reordering)
-- [Examples](#examples)
+- [Example](#example)
 - [License](#license)
 
 ## Install
@@ -44,13 +44,6 @@ go get github.com/dv1x3r/w2go
 | `w2file`   | Multipart file upload parsing helpers                                                       |
 | `w2sort`   | In-memory slice reordering for drag-and-drop support                                        |
 | `w2lib`    | Embedded w2ui JS/CSS assets served via `embed.FS`                                           |
-
-### Choosing between `w2sql` and `w2db`
-
-- Use **`w2sql`** when you want full control over your queries - build them with `go-sqlbuilder`, apply w2ui filters/sorters with `w2sql`, then execute them yourself.
-- Use **`w2db`** when you want to skip the boilerplate - pass your options and a `*sql.DB` or `*sql.Tx`, and it handles the rest.
-
-Both approaches are shown in the [examples](#examples).
 
 ## Usage
 
@@ -308,7 +301,7 @@ Features:
 - Cancel in-flight queries
 - Result grid with row count and elapsed time
 
-<img src="./examples/screenshots/sql-explorer.png" alt="Built-in SQL explorer widget" />
+<img src="./example/screenshots/sql-explorer.png" alt="Built-in SQL explorer widget" />
 
 > **Note:** `SQL Explorer` executes arbitrary SQL from the client. Do not expose it in production!
 
@@ -356,33 +349,24 @@ if err := w2sort.ReorderArray(ids, req); err != nil {
 // ids now reflects the new order - persist it to the database
 ```
 
-## Examples
+## Example
 
-Two complete CRUD demos are included, both using an in-memory SQLite database:
-
-| Example                              | Approach                                           |
-| ------------------------------------ | -------------------------------------------------- |
-| [`examples/w2db`](./examples/w2db)   | Uses `w2db` helpers, includes SQL explorer widget  |
-| [`examples/w2sql`](./examples/w2sql) | Uses `w2sql` + raw `database/sql` for full control |
+The complete CRUD demo is included using an in-memory SQLite database:
 
 ```shell
-go run ./examples/w2db/main.go
-# or
-go run ./examples/w2sql/main.go
+go run ./example/main.go
 ```
 
 Open `http://localhost:3000` in your browser.
 
-The `w2db` example also includes a Docker image definition:
+The example also includes a Docker image definition:
 
 ```shell
-docker build -f examples/w2db/Dockerfile -t w2go-w2db-demo .
-docker run --rm -p 3000:3000 w2go-w2db-demo
+docker build -f example/Dockerfile -t w2go-demo .
+docker run --rm -p 3000:3000 w2go-demo
 # or in readonly mode
-docker run --rm -p 3000:3000 w2go-w2db-demo --addr 0.0.0.0 -port 3000 -readonly
+docker run --rm -p 3000:3000 w2go-demo --addr 0.0.0.0 -port 3000 -readonly
 ```
-
-Both examples cover a full todo CRUD app with inline grid editing, a form popup, a status dropdown, and drag-and-drop reordering. The `w2db` example also includes the SQL explorer widget.
 
 ## License
 

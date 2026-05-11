@@ -9,7 +9,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN go build -o /out/w2go ./examples/w2db
+RUN go build -o /out/w2go ./example
 
 FROM scratch
 WORKDIR /app

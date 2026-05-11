@@ -27,30 +27,6 @@ var db *sql.DB
 
 var readonly *bool
 
-func protect(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if *readonly {
-			res := w2.NewErrorResponse("running in readonly mode")
-			res.Write(w, http.StatusForbidden)
-			return
-		}
-		next(w, r)
-	}
-}
-
-func cors(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
 type Todo struct {
 	ID          int              `json:"id"`
 	Name        string           `json:"name"`
@@ -69,6 +45,11 @@ func main() {
 	port := flag.Int("port", 3000, "Listening port")
 	readonly = flag.Bool("readonly", false, "Disable POST requests for demo")
 	flag.Parse()
+
+	address := fmt.Sprintf("%s:%d", *addr, *port)
+	if *readonly {
+		log.Println("readonly mode: enabled")
+	}
 
 	var err error
 	if db, err = sql.Open("sqlite", ":memory:"); err != nil {
@@ -124,29 +105,23 @@ func main() {
 	v1 := http.NewServeMux()
 
 	v1.HandleFunc("GET /todo/grid/records", getTodoGridRecords)
-	v1.HandleFunc("POST /todo/grid/save", protect(postTodoGridSave))
-	v1.HandleFunc("POST /todo/grid/remove", protect(postTodoGridRemove))
+	v1.HandleFunc("POST /todo/grid/save", postTodoGridSave)
+	v1.HandleFunc("POST /todo/grid/remove", postTodoGridRemove)
 
 	v1.HandleFunc("GET /todo/form", getTodoForm)
-	v1.HandleFunc("POST /todo/form", protect(postTodoForm))
+	v1.HandleFunc("POST /todo/form", postTodoForm)
 
 	v1.HandleFunc("GET /status/dropdown", getStatusDropdown)
 	v1.HandleFunc("GET /status/grid/records", getStatusGridRecords)
-	v1.HandleFunc("POST /status/grid/reorder", protect(postStatusGridReorder))
+	v1.HandleFunc("POST /status/grid/reorder", postStatusGridReorder)
 
 	v1.HandleFunc("GET /sql", w2widget.SQLiteSchemaHTTPHandler(db))
-	v1.HandleFunc("POST /sql", protect(w2widget.SQLExecHTTPHandler(db)))
+	v1.HandleFunc("POST /sql", w2widget.SQLExecHTTPHandler(db))
 
-	router.Handle("/api/v1/", http.StripPrefix("/api/v1", v1))
+	router.Handle("/api/v1/", protect(cors(http.StripPrefix("/api/v1", v1))))
 
-	var mode string
-	if *readonly {
-		mode = " in readonly mode"
-	}
-
-	address := fmt.Sprintf("%s:%d", *addr, *port)
-	log.Println("listening on: " + address + mode)
-	if err := http.ListenAndServe(address, cors(router)); err != nil {
+	log.Println("listening on: " + address)
+	if err := http.ListenAndServe(address, router); err != nil {
 		log.Fatalln(err)
 	}
 }
@@ -420,4 +395,28 @@ func postStatusGridReorder(w http.ResponseWriter, r *http.Request) {
 
 	res := w2.NewSuccessResponse()
 	res.Write(w, http.StatusOK)
+}
+
+func protect(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if *readonly && r.Method != "GET" {
+			res := w2.NewErrorResponse("running in readonly mode")
+			res.Write(w, http.StatusForbidden)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func cors(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
