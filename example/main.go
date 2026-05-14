@@ -158,7 +158,7 @@ func getTodoGridRecords(w http.ResponseWriter, r *http.Request) {
 			"quantity":    "t.quantity",
 			"status":      "s.name",
 		},
-		BuildBase: func(sb *sqlbuilder.SelectBuilder) {
+		BuildSelect: func(sb *sqlbuilder.SelectBuilder) {
 			sb.JoinWithOption(sqlbuilder.LeftJoin, "status as s", "s.id = t.status_id")
 		},
 		Scan: func(rows *sql.Rows, record *Todo) error {
