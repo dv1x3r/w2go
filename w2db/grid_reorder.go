@@ -14,19 +14,39 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
+// ReorderGridOptions configures ReorderGrid and ReorderGridContext.
 type ReorderGridOptions struct {
-	Update     string
-	IDField    string
-	SetField   string
+	// Update is the trusted table name or update target.
+	Update string
+
+	// IDField is the trusted integer ID column.
+	IDField string
+
+	// SetField is the trusted sortable position column to rewrite.
+	SetField string
+
+	// GroupField optionally limits reordering to the moved row's group.
 	GroupField string
-	Flavor     sqlbuilder.Flavor
-	Logger     *slog.Logger
+
+	// Flavor overrides the package default SQL dialect when non-zero.
+	Flavor sqlbuilder.Flavor
+
+	// Logger overrides the package default SQL logger when non-nil.
+	Logger *slog.Logger
 }
 
+// ReorderGrid reorders grid rows using context.Background.
 func ReorderGrid(db QueryExecer, req w2.ReorderGridRequest, opts ReorderGridOptions) (int, error) {
 	return ReorderGridContext(context.Background(), db, req, opts)
 }
 
+// ReorderGridContext rewrites the sortable position column for a drag-and-drop
+// grid move and returns RowsAffected.
+//
+// The current order is read by ordering SetField ascending and IDField
+// descending. Set GroupField when each group has an independent ordering. When
+// db is a *sql.DB, ReorderGridContext opens a transaction around the two update
+// statements. When db is already a *sql.Tx, it uses that transaction directly.
 func ReorderGridContext(ctx context.Context, db QueryExecer, req w2.ReorderGridRequest, opts ReorderGridOptions) (int, error) {
 	// reorder requires a transaction for the two-step update,
 	// but SQLite does not support nested transactions,

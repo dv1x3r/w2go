@@ -11,17 +11,27 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
+// RemoveGridOptions configures RemoveGrid and RemoveGridContext.
 type RemoveGridOptions struct {
-	From    string
+	// From is the trusted table name or delete target.
+	From string
+
+	// IDField is the trusted SQL expression matched against req.ID.
 	IDField string
-	Flavor  sqlbuilder.Flavor
-	Logger  *slog.Logger
+
+	// Flavor overrides the package default SQL dialect when non-zero.
+	Flavor sqlbuilder.Flavor
+
+	// Logger overrides the package default SQL logger when non-nil.
+	Logger *slog.Logger
 }
 
+// RemoveGrid deletes grid rows using context.Background.
 func RemoveGrid(db QueryExecer, req w2.RemoveGridRequest, opts RemoveGridOptions) (int, error) {
 	return RemoveGridContext(context.Background(), db, req, opts)
 }
 
+// RemoveGridContext deletes all rows listed in req.ID and returns RowsAffected.
 func RemoveGridContext(ctx context.Context, db QueryExecer, req w2.RemoveGridRequest, opts RemoveGridOptions) (int, error) {
 	if opts.From == "" {
 		return 0, errors.New("opts.From is required")

@@ -11,21 +11,34 @@ import (
 	"github.com/dv1x3r/w2go/w2"
 )
 
+// SQLExecField is the cell type returned by the SQL explorer result grid.
 type SQLExecField = w2.Field[string]
 
+// SQLExecRow is one SQL explorer result row keyed by column name.
 type SQLExecRow map[string]SQLExecField
 
+// SQLExecResult is the JSON response returned by SQL explorer query execution.
 type SQLExecResult struct {
-	Status  w2.Status    `json:"status"`
-	Columns []string     `json:"columns"`
+	// Status is set to w2.StatusSuccess by NewSQLExecResult.
+	Status w2.Status `json:"status"`
+
+	// Columns contains the result column names in display order.
+	Columns []string `json:"columns"`
+
+	// Records contains the scanned query rows.
 	Records []SQLExecRow `json:"records"`
-	Total   int          `json:"total"`
+
+	// Total is the number of result rows.
+	Total int `json:"total"`
 }
 
+// SQLExecRequest is the JSON request body for SQL explorer query execution.
 type SQLExecRequest struct {
+	// Query is the SQL text to execute.
 	Query string `json:"query"`
 }
 
+// NewSQLExecResult returns a successful SQL explorer result.
 func NewSQLExecResult(columns []string, records []SQLExecRow, total int) SQLExecResult {
 	return SQLExecResult{
 		Status:  w2.StatusSuccess,
@@ -35,6 +48,7 @@ func NewSQLExecResult(columns []string, records []SQLExecRow, total int) SQLExec
 	}
 }
 
+// Write sends the SQL explorer result as application/json.
 func (res SQLExecResult) Write(w http.ResponseWriter) error {
 	data, err := json.Marshal(res)
 	if err != nil {
@@ -45,6 +59,8 @@ func (res SQLExecResult) Write(w http.ResponseWriter) error {
 	return err
 }
 
+// SQLExecHandler returns a query-execution handler that reports errors to the
+// caller instead of writing error responses itself.
 func SQLExecHandler(db *sql.DB) func(w http.ResponseWriter, r *http.Request) error {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		var req SQLExecRequest
@@ -61,6 +77,9 @@ func SQLExecHandler(db *sql.DB) func(w http.ResponseWriter, r *http.Request) err
 	}
 }
 
+// SQLExecHTTPHandler returns an http.HandlerFunc for SQL explorer query execution.
+//
+// The handler writes JSON error responses for malformed requests and query failures.
 func SQLExecHTTPHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req SQLExecRequest
@@ -81,6 +100,10 @@ func SQLExecHTTPHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
+// SQLExecQuery executes query and scans the returned rows for the SQL explorer.
+//
+// Empty queries return an error. The query text is executed as-is, so callers
+// must restrict access to this function when query text comes from a user.
 func SQLExecQuery(ctx context.Context, db *sql.DB, query string) (SQLExecResult, error) {
 	if strings.TrimSpace(query) == "" {
 		return SQLExecResult{}, errors.New("query is empty")
@@ -129,6 +152,7 @@ func SQLExecQuery(ctx context.Context, db *sql.DB, query string) (SQLExecResult,
 	return NewSQLExecResult(columns, records, len(records)), nil
 }
 
+// SQLiteSchemaHandler returns a SQLite schema handler that reports errors to the caller instead of writing error responses itself.
 func SQLiteSchemaHandler(db *sql.DB) func(w http.ResponseWriter, r *http.Request) error {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		res, err := SQLiteSelectSchema(r.Context(), db)
@@ -142,6 +166,7 @@ func SQLiteSchemaHandler(db *sql.DB) func(w http.ResponseWriter, r *http.Request
 	}
 }
 
+// SQLiteSchemaHTTPHandler returns an http.HandlerFunc that writes the SQLite schema JSON used by the SQL explorer sidebar.
 func SQLiteSchemaHTTPHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		res, err := SQLiteSelectSchema(r.Context(), db)
@@ -156,6 +181,7 @@ func SQLiteSchemaHTTPHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
+// SQLiteSelectSchema returns SQLite database, table, and column metadata as a JSON document for the SQL explorer sidebar.
 func SQLiteSelectSchema(ctx context.Context, db *sql.DB) (string, error) {
 	const query = `
 SELECT json_object(

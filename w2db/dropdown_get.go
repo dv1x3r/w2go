@@ -11,20 +11,39 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
+// GetDropdownOptions configures GetDropdown and GetDropdownContext.
 type GetDropdownOptions struct {
-	From         string
-	IDField      string
-	TextField    string
+	// From is the table, view, or join expression used in the FROM clause.
+	From string
+
+	// IDField is the trusted SQL expression returned as each option ID.
+	IDField string
+
+	// TextField is the trusted SQL expression returned as each option label.
+	TextField string
+
+	// OrderByField is the trusted SQL expression used to order options.
 	OrderByField string
-	BuildSelect  func(sb *sqlbuilder.SelectBuilder)
-	Flavor       sqlbuilder.Flavor
-	Logger       *slog.Logger
+
+	// BuildSelect customizes the SELECT query, for example by adding joins or fixed filters.
+	BuildSelect func(sb *sqlbuilder.SelectBuilder)
+
+	// Flavor overrides the package default SQL dialect when non-zero.
+	Flavor sqlbuilder.Flavor
+
+	// Logger overrides the package default SQL logger when non-nil.
+	Logger *slog.Logger
 }
 
+// GetDropdown loads dropdown options using context.Background.
 func GetDropdown(db QueryExecer, req w2.GetDropdownRequest, opts GetDropdownOptions) (w2.GetDropdownResponse[w2.Dropdown], error) {
 	return GetDropdownContext(context.Background(), db, req, opts)
 }
 
+// GetDropdownContext loads dropdown options and filters them by req.Search.
+//
+// The response records use w2.Dropdown, with ID and Text scanned as w2.Field
+// values so nullable database values round-trip correctly.
 func GetDropdownContext(ctx context.Context, db QueryExecer, req w2.GetDropdownRequest, opts GetDropdownOptions) (w2.GetDropdownResponse[w2.Dropdown], error) {
 	if opts.From == "" {
 		return w2.GetDropdownResponse[w2.Dropdown]{}, errors.New("opts.From is required")

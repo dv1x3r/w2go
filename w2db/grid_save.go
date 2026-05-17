@@ -9,14 +9,22 @@ import (
 	"github.com/dv1x3r/w2go/w2"
 )
 
+// SaveGridOptions configures SaveGrid and SaveGridContext.
 type SaveGridOptions[T any] struct {
+	// BuildOptions converts one changed grid record into UpdateOptions.
 	BuildOptions func(change T) UpdateOptions
 }
 
+// SaveGrid saves all changed grid rows using context.Background.
 func SaveGrid[T any](db QueryExecer, req w2.SaveGridRequest[T], opts SaveGridOptions[T]) (int, error) {
 	return SaveGridContext(context.Background(), db, req, opts)
 }
 
+// SaveGridContext saves all changed grid rows and returns the total affected
+// row count.
+//
+// When db is a *sql.DB, SaveGridContext opens a transaction around all row
+// updates. When db is already a *sql.Tx, it uses that transaction directly.
 func SaveGridContext[T any](ctx context.Context, db QueryExecer, req w2.SaveGridRequest[T], opts SaveGridOptions[T]) (int, error) {
 	// save requires a transaction for multiple row update,
 	// but SQLite does not support nested transactions,

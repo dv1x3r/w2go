@@ -13,22 +13,46 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
+// GetGridOptions configures GetGrid and GetGridContext.
 type GetGridOptions[T any] struct {
-	From           string
-	Select         []string
-	CountExpr      string
-	WhereMapping   map[string]string
+	// From is the table, view, or join expression used in the FROM clause.
+	From string
+
+	// Select lists the SQL expressions returned for each grid row.
+	Select []string
+
+	// CountExpr is the aggregate used for the total row count. It defaults to "count(*)".
+	CountExpr string
+
+	// WhereMapping maps w2grid search field names to trusted SQL expressions.
+	WhereMapping map[string]string
+
+	// OrderByMapping maps w2grid sort field names to trusted SQL expressions.
 	OrderByMapping map[string]string
-	BuildSelect    func(sb *sqlbuilder.SelectBuilder)
-	Scan           func(rows *sql.Rows, record *T) error
-	Flavor         sqlbuilder.Flavor
-	Logger         *slog.Logger
+
+	// BuildSelect customizes the SELECT query, for example by adding joins or fixed filters.
+	BuildSelect func(sb *sqlbuilder.SelectBuilder)
+
+	// Scan copies the current data row into record.
+	Scan func(rows *sql.Rows, record *T) error
+
+	// Flavor overrides the package default SQL dialect when non-zero.
+	Flavor sqlbuilder.Flavor
+
+	// Logger overrides the package default SQL logger when non-nil.
+	Logger *slog.Logger
 }
 
+// GetGrid loads records for a w2grid request using context.Background.
 func GetGrid[T any](db QueryExecer, req w2.GetGridRequest, opts GetGridOptions[T]) (w2.GetGridResponse[T], error) {
 	return GetGridContext(context.Background(), db, req, opts)
 }
 
+// GetGridContext loads a filtered, sorted, and paginated w2grid response.
+//
+// It runs one count query for the filtered total and one data query for the
+// current page. Search and sort fields are ignored unless they exist in the
+// corresponding mapping.
 func GetGridContext[T any](ctx context.Context, db QueryExecer, req w2.GetGridRequest, opts GetGridOptions[T]) (w2.GetGridResponse[T], error) {
 	if opts.From == "" {
 		return w2.GetGridResponse[T]{}, errors.New("opts.From is required")

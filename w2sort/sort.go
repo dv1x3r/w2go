@@ -6,6 +6,10 @@ import (
 	"github.com/dv1x3r/w2go/w2"
 )
 
+// ReorderArray mutates "a", so r.RecID moves before r.MoveBefore or to the bottom.
+//
+// The slice should contain the current ordered record IDs. The function returns
+// an error when the slice is empty, RecID is missing, or MoveBefore is missing for a non-bottom move.
 func ReorderArray(a []int, r w2.ReorderGridRequest) error {
 	n := len(a)
 

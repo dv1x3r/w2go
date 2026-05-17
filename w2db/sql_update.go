@@ -10,20 +10,41 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
+// UpdateOptions configures Update and UpdateContext.
 type UpdateOptions struct {
-	Update  string
-	Cols    []string
-	Values  []any
+	// Update is the trusted table name or update target.
+	Update string
+
+	// Cols lists the columns to assign.
+	Cols []string
+
+	// Values lists the values assigned to Cols.
+	//
+	// Values that implement Providable are skipped when IsProvided returns false.
+	Values []any
+
+	// IDField is the trusted SQL expression used to locate the row.
 	IDField string
+
+	// IDValue is the value compared with IDField.
 	IDValue any
-	Flavor  sqlbuilder.Flavor
-	Logger  *slog.Logger
+
+	// Flavor overrides the package default SQL dialect when non-zero.
+	Flavor sqlbuilder.Flavor
+
+	// Logger overrides the package default SQL logger when non-nil.
+	Logger *slog.Logger
 }
 
+// Update updates one row using context.Background and returns RowsAffected.
 func Update(db QueryExecer, opts UpdateOptions) (int, error) {
 	return UpdateContext(context.Background(), db, opts)
 }
 
+// UpdateContext updates one row and returns RowsAffected.
+//
+// If every value is a Providable value that was not provided, no SQL statement
+// is executed and the function returns zero rows affected.
 func UpdateContext(ctx context.Context, db QueryExecer, opts UpdateOptions) (int, error) {
 	if opts.Update == "" {
 		return 0, errors.New("opts.Update is required")

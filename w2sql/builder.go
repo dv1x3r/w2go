@@ -7,29 +7,36 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-// Set updates the field only if a value is provided.
-// If the value is marked as valid, it sets the field to the provided value. Otherwise, it sets field to NULL.
+// Set adds an UPDATE assignment for field when value was provided by the client.
+//
+// A provided and valid value writes that value. A provided but invalid value
+// writes SQL NULL through w2.Field's driver.Valuer implementation. A value that
+// was not provided is skipped.
 func Set[T any](ub *sqlbuilder.UpdateBuilder, value w2.Field[T], field string) {
 	if value.Provided {
 		ub.SetMore(ub.Assign(field, value))
 	}
 }
 
-// Limit sets the LIMIT in SELECT based on provided W2GridRequest.
+// Limit applies r.Limit to sb when the request includes a non-zero limit.
 func Limit(sb *sqlbuilder.SelectBuilder, r w2.GetGridRequest) {
 	if r.Limit != 0 {
 		sb.Limit(r.Limit)
 	}
 }
 
-// Offset sets the LIMIT offset in SELECT based on provided W2GridRequest.
+// Offset applies r.Offset to sb when the request includes a non-zero offset.
 func Offset(sb *sqlbuilder.SelectBuilder, r w2.GetGridRequest) {
 	if r.Offset != 0 {
 		sb.Offset(r.Offset)
 	}
 }
 
-// Where sets expressions of WHERE in SELECT based on provided W2GridRequest and field mapping.
+// Where applies w2grid search filters to sb using mapping as a field whitelist.
+//
+// Keys in mapping are client-side field names from w2.GridSearch.Field; values
+// are trusted SQL column names or expressions. Search rules whose fields are not
+// present in mapping are ignored.
 func Where(sb *sqlbuilder.SelectBuilder, r w2.GetGridRequest, mapping map[string]string) {
 	c := make([]string, 0, len(r.Search))
 
@@ -118,7 +125,9 @@ func Where(sb *sqlbuilder.SelectBuilder, r w2.GetGridRequest, mapping map[string
 	}
 }
 
-// OrderBy sets columns of ORDER BY in SELECT based on provided W2GridRequest and field mapping.
+// OrderBy applies w2grid sort rules to sb using mapping as a field whitelist.
+//
+// Sort rules whose fields are not present in mapping are ignored.
 func OrderBy(sb *sqlbuilder.SelectBuilder, r w2.GetGridRequest, mapping map[string]string) {
 	for _, s := range r.Sort {
 		if field, ok := mapping[s.Field]; ok {

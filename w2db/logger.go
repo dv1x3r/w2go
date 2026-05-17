@@ -9,10 +9,19 @@ import (
 var defaultLogger *slog.Logger
 var slowThreshold = 250 * time.Millisecond
 
+// SetLogger sets the package default logger for SQL traces.
+//
+// Passing nil disables package-level logging. Individual option structs can
+// still provide their own Logger.
 func SetLogger(logger *slog.Logger) {
 	defaultLogger = logger
 }
 
+// SetSlowThreshold sets the duration at which successful SQL traces are logged
+// at Warn level instead of Debug level.
+//
+// Set threshold to zero or a negative value to log successful queries at Debug
+// level regardless of duration.
 func SetSlowThreshold(threshold time.Duration) {
 	slowThreshold = threshold
 }

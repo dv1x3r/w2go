@@ -5,11 +5,20 @@ import (
 	"net/http"
 )
 
+// Dropdown is the standard record shape for w2ui dropdown/list options.
 type Dropdown struct {
-	ID   Field[int]    `json:"id"`
+	// ID is the option value.
+	ID Field[int] `json:"id"`
+
+	// Text is the option label shown to the user.
 	Text Field[string] `json:"text"`
 }
 
+// UnmarshalJSON accepts the common w2ui dropdown encodings.
+//
+// w2ui may submit a selected item as a bare integer ID, as an object containing
+// id and text, as null, or as an empty string. The ID and Text fields use Field
+// so callers can tell whether a value was provided.
 func (d *Dropdown) UnmarshalJSON(data []byte) error {
 	if string(data) == "null" || string(data) == `""` {
 		d.ID.Provided = true
@@ -42,21 +51,33 @@ func (d *Dropdown) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// GetDropdownRequest is the request payload w2ui sends when loading dropdown
+// options.
 type GetDropdownRequest struct {
-	Max    int    `json:"max"`
+	// Max is the maximum number of options requested.
+	Max int `json:"max"`
+
+	// Search is the user's search text.
 	Search string `json:"search"`
 }
 
+// ParseGetDropdownRequest decodes the JSON value from a dropdown "request"
+// query parameter.
 func ParseGetDropdownRequest(request string) (GetDropdownRequest, error) {
 	var req GetDropdownRequest
 	return req, json.Unmarshal([]byte(request), &req)
 }
 
+// GetDropdownResponse is the JSON response expected by w2ui dropdown controls.
 type GetDropdownResponse[T any] struct {
-	Status  Status `json:"status"`
-	Records []T    `json:"records"`
+	// Status is set to StatusSuccess by NewGetDropdownResponse.
+	Status Status `json:"status"`
+
+	// Records are the dropdown options.
+	Records []T `json:"records"`
 }
 
+// NewGetDropdownResponse returns a successful dropdown response.
 func NewGetDropdownResponse[T any](records []T) GetDropdownResponse[T] {
 	return GetDropdownResponse[T]{
 		Status:  StatusSuccess,
@@ -64,6 +85,7 @@ func NewGetDropdownResponse[T any](records []T) GetDropdownResponse[T] {
 	}
 }
 
+// Write sends the dropdown response as application/json.
 func (res GetDropdownResponse[T]) Write(w http.ResponseWriter) error {
 	data, err := json.Marshal(res)
 	if err != nil {

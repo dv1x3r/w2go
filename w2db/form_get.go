@@ -12,20 +12,36 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
+// GetFormOptions configures GetForm and GetFormContext.
 type GetFormOptions[T any] struct {
-	From        string
-	IDField     string
-	Select      []string
+	// From is the table, view, or join expression used in the FROM clause.
+	From string
+
+	// IDField is the trusted SQL expression compared to req.RecID.
+	IDField string
+
+	// Select lists the SQL expressions returned for the form record.
+	Select []string
+
+	// BuildSelect customizes the SELECT query, for example by adding joins.
 	BuildSelect func(sb *sqlbuilder.SelectBuilder)
-	Scan        func(row *sql.Row, record *T) error
-	Flavor      sqlbuilder.Flavor
-	Logger      *slog.Logger
+
+	// Scan copies the selected row into record.
+	Scan func(row *sql.Row, record *T) error
+
+	// Flavor overrides the package default SQL dialect when non-zero.
+	Flavor sqlbuilder.Flavor
+
+	// Logger overrides the package default SQL logger when non-nil.
+	Logger *slog.Logger
 }
 
+// GetForm loads one form record using context.Background.
 func GetForm[T any](db QueryExecer, req w2.GetFormRequest, opts GetFormOptions[T]) (w2.GetFormResponse[T], error) {
 	return GetFormContext(context.Background(), db, req, opts)
 }
 
+// GetFormContext loads one form record by req.RecID.
 func GetFormContext[T any](ctx context.Context, db QueryExecer, req w2.GetFormRequest, opts GetFormOptions[T]) (w2.GetFormResponse[T], error) {
 	if opts.From == "" {
 		return w2.GetFormResponse[T]{}, errors.New("opts.From is required")

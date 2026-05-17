@@ -10,18 +10,30 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
+// InsertOptions configures Insert and InsertContext.
 type InsertOptions struct {
-	Into   string
-	Cols   []string
+	// Into is the trusted table name or insert target.
+	Into string
+
+	// Cols lists the columns to insert.
+	Cols []string
+
+	// Values lists the values assigned to Cols.
 	Values []any
+
+	// Flavor overrides the package default SQL dialect when non-zero.
 	Flavor sqlbuilder.Flavor
+
+	// Logger overrides the package default SQL logger when non-nil.
 	Logger *slog.Logger
 }
 
+// Insert inserts one row using context.Background and returns LastInsertId.
 func Insert(db QueryExecer, opts InsertOptions) (int, error) {
 	return InsertContext(context.Background(), db, opts)
 }
 
+// InsertContext inserts one row and returns LastInsertId.
 func InsertContext(ctx context.Context, db QueryExecer, opts InsertOptions) (int, error) {
 	if opts.Into == "" {
 		return 0, errors.New("opts.Into is required")
