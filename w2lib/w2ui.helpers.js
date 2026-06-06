@@ -73,6 +73,23 @@ export function w2init() {
     const src = w2utils.encodeTags(extra.value)
     return extra.value == '' ? null : `<img src="${src}" style="max-width: 72px; max-height: 72px; margin: auto;"/>`
   }
+  w2utils.formatters['datetime-local'] = (_, extra) => {
+    const d = new Date(extra.value)
+    if (Number.isNaN(d.getTime())) {
+      return extra.value
+    }
+    return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`
+  }
+  w2utils.formatters['datetime-local-ms'] = (_, extra) => {
+    const d = new Date(extra.value)
+    if (Number.isNaN(d.getTime())) {
+      return extra.value
+    }
+    const pad = (n, l = 2) => String(n).padStart(l, '0')
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ` +
+      `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.` +
+      `${pad(d.getMilliseconds(), 3)}`
+  }
   setDarkTheme(getStorageItem(darkThemeStorageKey) == 'dark')
 }
 
