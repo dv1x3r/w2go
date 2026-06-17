@@ -65,13 +65,17 @@ export function w2init() {
     }
     return result
   }
-  w2utils.formatters['icon-small'] = (_, extra) => {
+  w2utils.formatters['icon'] = (_, extra) => {
     const src = w2utils.encodeTags(extra.value)
-    return extra.value == '' ? null : `<img src="${src}" style="max-width: 24px; max-height: 24px; margin: auto;"/>`
+    return extra.value == '' ? null : `<img src="${src}" style="display:block; max-width: 24px; max-height: 24px; margin: auto;"/>`
   }
-  w2utils.formatters['icon-normal'] = (_, extra) => {
+  w2utils.formatters['icon-sm'] = (_, extra) => {
     const src = w2utils.encodeTags(extra.value)
-    return extra.value == '' ? null : `<img src="${src}" style="max-width: 72px; max-height: 72px; margin: auto;"/>`
+    return extra.value == '' ? null : `<img src="${src}" style="display:block; max-width: 16px; max-height: 16px; margin: auto;"/>`
+  }
+  w2utils.formatters['icon-lg'] = (_, extra) => {
+    const src = w2utils.encodeTags(extra.value)
+    return extra.value == '' ? null : `<img src="${src}" style="display:block; max-width: 72px; max-height: 72px; margin: auto;"/>`
   }
   w2utils.formatters['datetime-local'] = (_, extra) => {
     const d = new Date(extra.value)
