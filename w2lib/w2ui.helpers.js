@@ -108,7 +108,7 @@ export function w2initLocale(opts = {}) {
 }
 
 export async function w2fetch(opts = {}) {
-  const { owner, reload, lock, url, method, headers, body, signal, timeout = 5000 } = opts
+  const { owner, reload, lock, url, method, headers, body, signal } = opts
   if (owner && lock) {
     owner.lock({ spinner: true, msg: lock })
   }
@@ -126,13 +126,55 @@ export async function w2fetch(opts = {}) {
       throw new Error(err.message)
     }
     const result = await res.json()
-    if (result.message) {
-      w2utils.notify(result.message, { timeout })
-    }
-    if (owner && reload) {
-      owner.reload()
+    if (owner) {
+      if (result.message) {
+        owner.message(result.message)
+      }
+      if (reload) {
+        owner.reload()
+      }
     }
     return result
+  }
+  catch (err) {
+    if (owner) {
+      owner.message(err.toString())
+    } else {
+      throw err
+    }
+  }
+  finally {
+    if (owner && lock) {
+      owner.unlock()
+    }
+  }
+}
+
+export async function w2download(opts = {}) {
+  const { owner, lock, url, name, method, headers, body, signal } = opts
+  if (owner && lock) {
+    owner.lock({ spinner: true, msg: lock })
+  }
+  try {
+    const res = await fetch(url, {
+      method: method,
+      headers: headers,
+      body: body,
+      signal: signal,
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => {
+        return { message: res.statusText }
+      })
+      throw new Error(err.message)
+    }
+    const blob = await res.blob()
+    const objectUrl = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = objectUrl
+    a.download = name
+    a.click()
+    URL.revokeObjectURL(objectUrl)
   }
   catch (err) {
     if (owner) {
