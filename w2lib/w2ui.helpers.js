@@ -287,3 +287,16 @@ export function doubleClickNonEditable(event, fn) {
   }
 }
 
+export function colorRows(event, fn) {
+  event.onComplete = () => {
+    event.detail.data?.records?.forEach(x => {
+      const color = fn(x)
+      if (color != null) {
+        const row = event.owner.get(x.id)
+        row.w2ui = { style: `color: ${color} !important;` }
+        event.owner.refreshRow(x.id)
+      }
+    })
+  }
+}
+
