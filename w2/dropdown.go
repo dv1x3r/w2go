@@ -65,6 +65,10 @@ type GetDropdownRequest struct {
 // query parameter.
 func ParseGetDropdownRequest(request string) (GetDropdownRequest, error) {
 	var req GetDropdownRequest
+	if request == "" {
+		req.Max = -1
+		return req, nil
+	}
 	return req, json.Unmarshal([]byte(request), &req)
 }
 
