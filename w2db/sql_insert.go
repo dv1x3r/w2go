@@ -15,11 +15,8 @@ type InsertOptions struct {
 	// Into is the trusted table name or insert target.
 	Into string
 
-	// Cols lists the columns to insert.
-	Cols []string
-
-	// Values lists the values assigned to Cols.
-	Values []any
+	// Values lists values keyed by trusted column names.
+	Values map[string]any
 
 	// Flavor overrides the package default SQL dialect when non-zero.
 	Flavor sqlbuilder.Flavor
@@ -39,16 +36,8 @@ func InsertContext(ctx context.Context, db QueryExecer, opts InsertOptions) (int
 		return 0, errors.New("opts.Into is required")
 	}
 
-	if len(opts.Cols) == 0 {
-		return 0, errors.New("opts.Cols is required")
-	}
-
 	if len(opts.Values) == 0 {
 		return 0, errors.New("opts.Values is required")
-	}
-
-	if len(opts.Cols) != len(opts.Values) {
-		return 0, errors.New("opts.Cols and opts.Values must have same length")
 	}
 
 	flavor := opts.Flavor
@@ -61,9 +50,17 @@ func InsertContext(ctx context.Context, db QueryExecer, opts InsertOptions) (int
 		logger = defaultLogger
 	}
 
+	cols := make([]string, 0, len(opts.Values))
+	values := make([]any, 0, len(opts.Values))
+	for k, v := range opts.Values {
+		cols = append(cols, k)
+		values = append(values, v)
+	}
+
 	builder := sqlbuilder.InsertInto(opts.Into)
-	builder.Cols(opts.Cols...)
-	builder.Values(opts.Values...)
+	builder.Cols(cols...)
+	builder.Values(values...)
+
 	query, args := builder.BuildWithFlavor(flavor)
 
 	begin := time.Now()

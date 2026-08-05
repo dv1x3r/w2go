@@ -188,10 +188,11 @@ affected, err := w2db.SaveGrid(tx, req, w2db.SaveGridOptions[Todo]{
     BuildOptions: func(change Todo) w2db.UpdateOptions {
         return w2db.UpdateOptions{
             Update:  "todo",
-            Cols:    []string{"description", "quantity"},
-            Values:  []any{change.Description.NotNull(), change.Quantity},
-            IDField: "id",
-            IDValue: change.ID,
+            Values: map[string]any{
+                "description": req.Record.Description.NotNull(),
+                "quantity":    req.Record.Quantity,
+            },
+            Where: map[string]any{"id": req.RecID},
         }
     },
 })
@@ -226,17 +227,20 @@ res, err := w2db.GetForm(db, req, w2db.GetFormOptions[Todo]{
 // Insert a new record
 lastID, err := w2db.Insert(db, w2db.InsertOptions{
     Into:   "todo",
-    Cols:   []string{"name", "description"},
-    Values: []any{req.Record.Name, req.Record.Description},
+    Values: map[string]any{
+        "name":        req.Record.Name,
+        "description": req.Record.Description,
+    },
 })
 
 // Update an existing record
 affected, err := w2db.Update(db, w2db.UpdateOptions{
     Update:  "todo",
-    Cols:    []string{"name", "description"},
-    Values:  []any{req.Record.Name, req.Record.Description},
-    IDField: "id",
-    IDValue: req.RecID,
+    Values: map[string]any{
+        "name":        req.Record.Name,
+        "description": req.Record.Description,
+    },
+    Where: map[string]any{"id": req.RecID},
 })
 ```
 

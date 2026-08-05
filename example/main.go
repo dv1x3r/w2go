@@ -193,11 +193,13 @@ func postTodoGridSave(w http.ResponseWriter, r *http.Request) {
 	_, err = w2db.SaveGrid(db, req, w2db.SaveGridOptions[Todo]{
 		BuildOptions: func(change Todo) w2db.UpdateOptions {
 			return w2db.UpdateOptions{
-				Update:  "todo",
-				Cols:    []string{"description", "quantity", "status_id"},
-				Values:  []any{change.Description.NotNull(), change.Quantity, change.Status.ID},
-				IDField: "id",
-				IDValue: change.ID,
+				Update: "todo",
+				Values: map[string]any{
+					"description": change.Description.NotNull(),
+					"quantity":    change.Quantity,
+					"status_id":   change.Status.ID,
+				},
+				Where: map[string]any{"id": change.ID},
 			}
 		},
 	})
@@ -292,9 +294,13 @@ func postTodoForm(w http.ResponseWriter, r *http.Request) {
 
 	if req.RecID == 0 {
 		recID, err := w2db.Insert(db, w2db.InsertOptions{
-			Into:   "todo",
-			Cols:   []string{"name", "description", "quantity", "status_id"},
-			Values: []any{req.Record.Name, req.Record.Description.NotNull(), req.Record.Quantity, req.Record.Status.ID},
+			Into: "todo",
+			Values: map[string]any{
+				"name":        req.Record.Name,
+				"description": req.Record.Description.NotNull(),
+				"quantity":    req.Record.Quantity,
+				"status_id":   req.Record.Status.ID,
+			},
 		})
 		if err != nil {
 			res := w2.NewErrorResponse(err.Error())
@@ -304,11 +310,14 @@ func postTodoForm(w http.ResponseWriter, r *http.Request) {
 		req.RecID = recID
 	} else {
 		_, err := w2db.Update(db, w2db.UpdateOptions{
-			Update:  "todo",
-			Cols:    []string{"name", "description", "quantity", "status_id"},
-			Values:  []any{req.Record.Name, req.Record.Description.NotNull(), req.Record.Quantity, req.Record.Status.ID},
-			IDField: "id",
-			IDValue: req.RecID,
+			Update: "todo",
+			Values: map[string]any{
+				"name":        req.Record.Name,
+				"description": req.Record.Description.NotNull(),
+				"quantity":    req.Record.Quantity,
+				"status_id":   req.Record.Status.ID,
+			},
+			Where: map[string]any{"id": req.RecID},
 		})
 		if err != nil {
 			res := w2.NewErrorResponse(err.Error())

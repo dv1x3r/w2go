@@ -15,19 +15,13 @@ type UpdateOptions struct {
 	// Update is the trusted table name or update target.
 	Update string
 
-	// Cols lists the columns to assign.
-	Cols []string
-
-	// Values lists the values assigned to Cols.
+	// Values lists values keyed by trusted column names.
 	//
 	// Values that implement Providable are skipped when IsProvided returns false.
-	Values []any
+	Values map[string]any
 
-	// IDField is the trusted SQL expression used to locate the row.
-	IDField string
-
-	// IDValue is the value compared with IDField.
-	IDValue any
+	// Where lists equality conditions keyed by trusted SQL expressions.
+	Where map[string]any
 
 	// Flavor overrides the package default SQL dialect when non-zero.
 	Flavor sqlbuilder.Flavor
@@ -50,24 +44,12 @@ func UpdateContext(ctx context.Context, db QueryExecer, opts UpdateOptions) (int
 		return 0, errors.New("opts.Update is required")
 	}
 
-	if len(opts.Cols) == 0 {
-		return 0, errors.New("opts.Cols is required")
-	}
-
 	if len(opts.Values) == 0 {
 		return 0, errors.New("opts.Values is required")
 	}
 
-	if len(opts.Cols) != len(opts.Values) {
-		return 0, errors.New("opts.Cols and opts.Values must have same length")
-	}
-
-	if opts.IDField == "" {
-		return 0, errors.New("opts.IDField is required")
-	}
-
-	if opts.IDValue == nil {
-		return 0, errors.New("opts.IDValue is required")
+	if len(opts.Where) == 0 {
+		return 0, errors.New("opts.Where is required")
 	}
 
 	flavor := opts.Flavor
@@ -80,26 +62,25 @@ func UpdateContext(ctx context.Context, db QueryExecer, opts UpdateOptions) (int
 		logger = defaultLogger
 	}
 
-	var assigned int
-
 	builder := sqlbuilder.Update(opts.Update)
-	for i := range opts.Cols {
-		if f, ok := opts.Values[i].(Providable); ok {
-			if f.IsProvided() {
-				builder.SetMore(builder.Assign(opts.Cols[i], opts.Values[i]))
-				assigned++
-			}
-		} else {
-			builder.SetMore(builder.Assign(opts.Cols[i], opts.Values[i]))
-			assigned++
+	assigned := 0
+
+	for col, value := range opts.Values {
+		if p, ok := value.(Providable); ok && !p.IsProvided() {
+			continue
 		}
+		builder.SetMore(builder.Assign(col, value))
+		assigned++
 	}
 
 	if assigned == 0 {
 		return 0, nil
 	}
 
-	builder.Where(builder.EQ(opts.IDField, opts.IDValue))
+	for col, value := range opts.Where {
+		builder.Where(builder.EQ(col, value))
+	}
+
 	query, args := builder.BuildWithFlavor(flavor)
 
 	begin := time.Now()
