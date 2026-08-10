@@ -174,10 +174,10 @@ for _, change := range req.Changes {
 ```go
 // Load records with pagination, sorting, and search
 res, err := w2db.GetGrid(db, req, w2db.GetGridOptions[Todo]{
-    From:           "todo as t",
-    Select:         []string{"t.id", "t.name", "t.description"},
-    WhereMapping:   map[string]string{"id": "t.id", "name": "t.name"},
-    OrderByMapping: map[string]string{"id": "t.id", "name": "t.name"},
+    From:    "todo as t",
+    Select:  []string{"t.id", "t.name", "t.description"},
+    Where:   map[string]string{"id": "t.id", "name": "t.name"},
+    OrderBy: map[string]string{"id": "t.id", "name": "t.name"},
     Scan: func(rows *sql.Rows, record *Todo) error {
         return rows.Scan(&record.ID, &record.Name, &record.Description)
     },

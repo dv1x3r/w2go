@@ -144,14 +144,14 @@ func getTodoGridRecords(w http.ResponseWriter, r *http.Request) {
 			"t.status_id",
 			"s.name as status_name",
 		},
-		WhereMapping: map[string]string{
+		Where: map[string]string{
 			"id":          "t.id",
 			"name":        "t.name",
 			"description": "t.description",
 			"quantity":    "t.quantity",
 			"status":      "t.status_id",
 		},
-		OrderByMapping: map[string]string{
+		OrderBy: map[string]string{
 			"id":          "t.id",
 			"name":        "t.name",
 			"description": "t.description",

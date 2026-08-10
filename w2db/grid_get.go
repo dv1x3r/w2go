@@ -24,11 +24,11 @@ type GetGridOptions[T any] struct {
 	// CountExpr is the aggregate used for the total row count. It defaults to "count(*)".
 	CountExpr string
 
-	// WhereMapping maps w2grid search field names to trusted SQL expressions.
-	WhereMapping map[string]string
+	// Where maps w2grid search field names to trusted SQL expressions.
+	Where map[string]string
 
-	// OrderByMapping maps w2grid sort field names to trusted SQL expressions.
-	OrderByMapping map[string]string
+	// OrderBy maps w2grid sort field names to trusted SQL expressions.
+	OrderBy map[string]string
 
 	// Build customizes the SELECT query, for example by adding joins or fixed filters.
 	Build func(sb *sqlbuilder.SelectBuilder)
@@ -90,7 +90,7 @@ func GetGridContext[T any](ctx context.Context, db QueryExecer, req w2.GetGridRe
 		opts.Build(countBuilder)
 	}
 
-	w2sql.Where(countBuilder, req, opts.WhereMapping)
+	w2sql.Where(countBuilder, req, opts.Where)
 	query, args := countBuilder.Build()
 
 	begin := time.Now()
@@ -109,8 +109,8 @@ func GetGridContext[T any](ctx context.Context, db QueryExecer, req w2.GetGridRe
 		opts.Build(dataBuilder)
 	}
 
-	w2sql.Where(dataBuilder, req, opts.WhereMapping)
-	w2sql.OrderBy(dataBuilder, req, opts.OrderByMapping)
+	w2sql.Where(dataBuilder, req, opts.Where)
+	w2sql.OrderBy(dataBuilder, req, opts.OrderBy)
 	w2sql.Limit(dataBuilder, req)
 	w2sql.Offset(dataBuilder, req)
 	query, args = dataBuilder.Build()
