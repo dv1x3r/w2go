@@ -158,7 +158,7 @@ func getTodoGridRecords(w http.ResponseWriter, r *http.Request) {
 			"quantity":    "t.quantity",
 			"status":      "s.name",
 		},
-		BuildSelect: func(sb *sqlbuilder.SelectBuilder) {
+		Build: func(sb *sqlbuilder.SelectBuilder) {
 			sb.JoinWithOption(sqlbuilder.LeftJoin, "status as s", "s.id = t.status_id")
 		},
 		Scan: func(rows *sql.Rows, record *Todo) error {
@@ -256,7 +256,7 @@ func getTodoForm(w http.ResponseWriter, r *http.Request) {
 			"t.status_id",
 			"s.name as status_name",
 		},
-		BuildSelect: func(sb *sqlbuilder.SelectBuilder) {
+		Build: func(sb *sqlbuilder.SelectBuilder) {
 			sb.JoinWithOption(sqlbuilder.LeftJoin, "status as s", "s.id = t.status_id")
 		},
 		Scan: func(row *sql.Row, record *Todo) error {
@@ -365,7 +365,7 @@ func getStatusGridRecords(w http.ResponseWriter, r *http.Request) {
 	res, err := w2db.GetGrid(db, req, w2db.GetGridOptions[Status]{
 		From:   "status",
 		Select: []string{"id", "name"},
-		BuildSelect: func(sb *sqlbuilder.SelectBuilder) {
+		Build: func(sb *sqlbuilder.SelectBuilder) {
 			sb.OrderByAsc("position").OrderByDesc("id")
 		},
 		Scan: func(rows *sql.Rows, record *Status) error {

@@ -23,8 +23,8 @@ type GetFormOptions[T any] struct {
 	// Select lists the SQL expressions returned for the form record.
 	Select []string
 
-	// BuildSelect customizes the SELECT query, for example by adding joins.
-	BuildSelect func(sb *sqlbuilder.SelectBuilder)
+	// Build customizes the SELECT query, for example by adding joins.
+	Build func(sb *sqlbuilder.SelectBuilder)
 
 	// Scan copies the selected row into record.
 	Scan func(row *sql.Row, record *T) error
@@ -70,8 +70,8 @@ func GetFormContext[T any](ctx context.Context, db QueryExecer, req w2.GetFormRe
 	}
 
 	builder := sqlbuilder.Select(opts.Select...).From(opts.From)
-	if opts.BuildSelect != nil {
-		opts.BuildSelect(builder)
+	if opts.Build != nil {
+		opts.Build(builder)
 	}
 
 	builder.Where(builder.EQ(opts.IDField, req.RecID))

@@ -25,8 +25,8 @@ type GetDropdownOptions struct {
 	// OrderByField is the trusted SQL expression used to order options.
 	OrderByField string
 
-	// BuildSelect customizes the SELECT query, for example by adding joins or fixed filters.
-	BuildSelect func(sb *sqlbuilder.SelectBuilder)
+	// Build customizes the SELECT query, for example by adding joins or fixed filters.
+	Build func(sb *sqlbuilder.SelectBuilder)
 
 	// Flavor overrides the package default SQL dialect when non-zero.
 	Flavor sqlbuilder.Flavor
@@ -72,8 +72,8 @@ func GetDropdownContext(ctx context.Context, db QueryExecer, req w2.GetDropdownR
 	}
 
 	builder := sqlbuilder.Select(opts.IDField, opts.TextField).From(opts.From)
-	if opts.BuildSelect != nil {
-		opts.BuildSelect(builder)
+	if opts.Build != nil {
+		opts.Build(builder)
 	}
 
 	if req.Search != "" {

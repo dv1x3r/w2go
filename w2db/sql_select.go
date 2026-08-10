@@ -12,10 +12,10 @@ import (
 )
 
 type SelectOptions[T any] struct {
-	BuildSelect func(sb *sqlbuilder.SelectBuilder)
-	Scan        func(rows *sql.Rows, record *T) error
-	Flavor      sqlbuilder.Flavor
-	Logger      *slog.Logger
+	Build  func(sb *sqlbuilder.SelectBuilder)
+	Scan   func(rows *sql.Rows, record *T) error
+	Flavor sqlbuilder.Flavor
+	Logger *slog.Logger
 }
 
 func Select[T any](db QueryExecer, opts SelectOptions[T]) ([]T, error) {
@@ -23,8 +23,8 @@ func Select[T any](db QueryExecer, opts SelectOptions[T]) ([]T, error) {
 }
 
 func SelectContext[T any](ctx context.Context, db QueryExecer, opts SelectOptions[T]) ([]T, error) {
-	if opts.BuildSelect == nil {
-		return nil, errors.New("opts.BuildSelect is required")
+	if opts.Build == nil {
+		return nil, errors.New("opts.Build is required")
 	}
 
 	if opts.Scan == nil {
@@ -42,7 +42,7 @@ func SelectContext[T any](ctx context.Context, db QueryExecer, opts SelectOption
 	}
 
 	builder := sqlbuilder.NewSelectBuilder()
-	opts.BuildSelect(builder)
+	opts.Build(builder)
 	query, args := builder.BuildWithFlavor(flavor)
 
 	begin := time.Now()

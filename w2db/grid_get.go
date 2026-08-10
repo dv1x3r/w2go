@@ -30,8 +30,8 @@ type GetGridOptions[T any] struct {
 	// OrderByMapping maps w2grid sort field names to trusted SQL expressions.
 	OrderByMapping map[string]string
 
-	// BuildSelect customizes the SELECT query, for example by adding joins or fixed filters.
-	BuildSelect func(sb *sqlbuilder.SelectBuilder)
+	// Build customizes the SELECT query, for example by adding joins or fixed filters.
+	Build func(sb *sqlbuilder.SelectBuilder)
 
 	// Scan copies the current data row into record.
 	Scan func(rows *sql.Rows, record *T) error
@@ -86,8 +86,8 @@ func GetGridContext[T any](ctx context.Context, db QueryExecer, req w2.GetGridRe
 
 	countBuilder := sqlbuilder.Select(countExpr).From(opts.From)
 	countBuilder.SetFlavor(flavor)
-	if opts.BuildSelect != nil {
-		opts.BuildSelect(countBuilder)
+	if opts.Build != nil {
+		opts.Build(countBuilder)
 	}
 
 	w2sql.Where(countBuilder, req, opts.WhereMapping)
@@ -105,8 +105,8 @@ func GetGridContext[T any](ctx context.Context, db QueryExecer, req w2.GetGridRe
 
 	dataBuilder := sqlbuilder.Select(opts.Select...).From(opts.From)
 	dataBuilder.SetFlavor(flavor)
-	if opts.BuildSelect != nil {
-		opts.BuildSelect(dataBuilder)
+	if opts.Build != nil {
+		opts.Build(dataBuilder)
 	}
 
 	w2sql.Where(dataBuilder, req, opts.WhereMapping)
