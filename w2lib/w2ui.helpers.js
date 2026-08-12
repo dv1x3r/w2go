@@ -287,7 +287,7 @@ export function doubleClickNonEditable(event, fn) {
   }
 }
 
-export function colorRows(event, fn) {
+export function colorizeGridRows(event, fn) {
   event.onComplete = () => {
     event.detail.data?.records?.forEach(x => {
       const color = fn(x)
@@ -297,6 +297,22 @@ export function colorRows(event, fn) {
         event.owner.refreshRow(x.id)
       }
     })
+  }
+}
+
+export function setFormRecordFromGridSelection(event, form) {
+  event.onComplete = () => {
+    const selection = event.owner.getSelection()
+    const id = selection.length == 1 ? selection[0] : null
+    if (id == null) {
+      form.recid = null
+      form.clear()
+    } else {
+      const record = event.owner.get(id)
+      form.recid = id
+      form.record = record
+      form.refresh()
+    }
   }
 }
 
