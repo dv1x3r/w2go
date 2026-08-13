@@ -265,11 +265,10 @@ export function remoteListOptions(url, opts = {}) {
   }
 }
 
-export function reloadOnSuccess(event) {
-  event.onComplete = () => {
-    if (event.detail.data?.status == 'success') {
-      event.owner.reload()
-    }
+export async function reloadOnSuccess(event) {
+  await event.complete
+  if (event.detail.data?.status == 'success') {
+    event.owner.reload()
   }
 }
 
@@ -287,32 +286,30 @@ export function doubleClickNonEditable(event, fn) {
   }
 }
 
-export function colorizeGridRows(event, fn) {
-  event.onComplete = () => {
-    event.detail.data?.records?.forEach(x => {
-      const color = fn(x)
-      if (color != null) {
-        const row = event.owner.get(x.id)
-        row.w2ui = { style: `color: ${color} !important;` }
-        event.owner.refreshRow(x.id)
-      }
-    })
-  }
+export async function colorizeGridRows(event, fn) {
+  await event.complete
+  event.detail.data?.records?.forEach(x => {
+    const color = fn(x)
+    if (color != null) {
+      const row = event.owner.get(x.id)
+      row.w2ui = { style: `color: ${color} !important;` }
+      event.owner.refreshRow(x.id)
+    }
+  })
 }
 
-export function setFormRecordFromGridSelection(event, form) {
-  event.onComplete = () => {
-    const selection = event.owner.getSelection()
-    const id = selection.length == 1 ? selection[0] : null
-    if (id == null) {
-      form.recid = null
-      form.clear()
-    } else {
-      const record = event.owner.get(id)
-      form.recid = id
-      form.record = record
-      form.refresh()
-    }
+export async function setFormRecordFromGridSelection(event, form) {
+  await event.complete
+  const selection = event.owner.getSelection()
+  const id = selection.length == 1 ? selection[0] : null
+  if (id == null) {
+    form.recid = null
+    form.clear()
+  } else {
+    const record = event.owner.get(id)
+    form.recid = id
+    form.record = record
+    form.refresh()
   }
 }
 
