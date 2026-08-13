@@ -72,3 +72,54 @@ func SelectContext[T any](ctx context.Context, db QueryExecer, opts SelectOption
 	traceSQL(ctx, logger, begin, query, args, nil)
 	return records, nil
 }
+
+type SelectRowOptions[T any] struct {
+	Build  func(sb *sqlbuilder.SelectBuilder)
+	Scan   func(row *sql.Row, record *T) error
+	Flavor sqlbuilder.Flavor
+	Logger *slog.Logger
+}
+
+func SelectRow[T any](db QueryExecer, opts SelectRowOptions[T]) (T, bool, error) {
+	return SelectRowContext[T](context.Background(), db, opts)
+}
+
+func SelectRowContext[T any](ctx context.Context, db QueryExecer, opts SelectRowOptions[T]) (T, bool, error) {
+	var record T
+
+	if opts.Build == nil {
+		return record, false, errors.New("opts.Build is required")
+	}
+
+	if opts.Scan == nil {
+		return record, false, errors.New("opts.Scan is required")
+	}
+
+	flavor := opts.Flavor
+	if flavor == 0 {
+		flavor = defaultFlavor
+	}
+
+	logger := opts.Logger
+	if logger == nil {
+		logger = defaultLogger
+	}
+
+	builder := sqlbuilder.NewSelectBuilder()
+	opts.Build(builder)
+	query, args := builder.BuildWithFlavor(flavor)
+
+	begin := time.Now()
+	row := db.QueryRowContext(ctx, query, args...)
+	if err := opts.Scan(row, &record); err != nil {
+		traceSQL(ctx, logger, begin, query, args, err)
+		if err != sql.ErrNoRows {
+			return record, false, fmt.Errorf("scan: %w", err)
+		} else {
+			return record, false, nil
+		}
+	}
+
+	traceSQL(ctx, logger, begin, query, args, nil)
+	return record, true, nil
+}
