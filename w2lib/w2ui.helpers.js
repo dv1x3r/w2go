@@ -292,7 +292,8 @@ export async function colorizeGridRows(event, fn) {
     const color = fn(x)
     if (color != null) {
       const row = event.owner.get(x.id)
-      row.w2ui = { style: `color: ${color} !important;` }
+      row.w2ui ??= {}
+      row.w2ui.style = `color: ${color} !important;`
       event.owner.refreshRow(x.id)
     }
   })
