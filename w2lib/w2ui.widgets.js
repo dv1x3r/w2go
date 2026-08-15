@@ -169,31 +169,37 @@ export function createSqlExplorerLayout(opts = {}) {
   }
 
   function setSchemaSidebar(schema) {
+    const icons = {
+      tables: 'fa fa-table-list',
+      views: 'fa fa-eye',
+      virtual: 'fa fa-cubes',
+      shadow: 'fa fa-layer-group',
+    }
     sidebar.nodes = schema.databases.map((db, dbIndex) => ({
       id: `db-${dbIndex}`,
       text: db.name,
       icon: 'fa fa-database',
       expanded: true,
-      nodes: [
-        {
-          id: `db-${dbIndex}-tables`,
-          text: 'tables',
-          icon: 'fa fa-table-list',
+      nodes: Object.entries(db)
+        .filter(([key, value]) => key !== 'name' && Array.isArray(value) && value.length > 0)
+        .map(([type, objects]) => ({
+          id: `db-${dbIndex}-${type}`,
+          text: type,
+          icon: icons[type] ?? 'fa fa-folder',
           expanded: true,
-          nodes: db.tables.map((table, tableIndex) => ({
-            id: `db-${dbIndex}-table-${tableIndex}`,
-            text: table.name,
+          nodes: objects.map((object, objectIndex) => ({
+            id: `db-${dbIndex}-${type}-${objectIndex}`,
+            text: object.name,
             icon: 'fa fa-table',
             expanded: false,
-            query: buildSelectRowsQuery(db.name, table.name, table.columns),
-            nodes: table.columns.map((col, colIndex) => ({
-              id: `db-${dbIndex}-table-${tableIndex}-col-${colIndex}`,
-              text: `${col.name}${col.type ? ` (${col.type})` : ''}`,
+            query: buildSelectRowsQuery(db.name, object.name, object.columns),
+            nodes: object.columns.map((col, colIndex) => ({
+              id: `db-${dbIndex}-${type}-${objectIndex}-col-${colIndex}`,
+              text: `${col.name}${col.type || col.notnull ? ` (${[col.type, col.notnull ? 'NOT NULL' : undefined].filter(Boolean).join(', ')})` : ''}`,
               icon: col.pk ? 'fa fa-key' : 'fa',
             })),
           })),
-        },
-      ],
+        })),
     }))
     sidebar.refresh()
   }

@@ -184,43 +184,61 @@ func SQLiteSchemaHTTPHandler(db *sql.DB) http.HandlerFunc {
 // SQLiteSelectSchema returns SQLite database, table, and column metadata as a JSON document for the SQL explorer sidebar.
 func SQLiteSelectSchema(ctx context.Context, db *sql.DB) (string, error) {
 	const query = `
+WITH objects AS (
+  SELECT
+    db.[name] AS db_name,
+    t.[name],
+    t.[type],
+    json_object(
+      'name', t.[name],
+      'columns', (
+        SELECT json_group_array(
+          json_object(
+            'name', col.[name],
+            'type', col.[type],
+            'notnull', col.[notnull],
+            'default', col.[dflt_value],
+            'pk', col.[pk]
+          )
+        )
+        FROM pragma_table_info(t.[name]) col
+      )
+    ) AS obj
+  FROM pragma_database_list db
+  JOIN pragma_table_list t
+    ON t.[schema] = db.[name]
+  WHERE t.[name] NOT LIKE 'sqlite_%'
+)
 SELECT json_object(
   'databases', (
     SELECT json_group_array(
       json_object(
         'name', db.[name],
         'tables', (
-          SELECT json_group_array(
-            json_object(
-              'name', t.[name],
-              'type', t.[type],
-              'columns', (
-                SELECT json_group_array(
-                  json_object(
-                    'name', col.[name],
-                    'type', col.[type],
-                    'notnull', col.[notnull],
-                    'default', col.[dflt_value],
-                    'pk', col.[pk]
-                  )
-                )
-                FROM pragma_table_info(t.[name]) col
-              )
-            )
-          )
-          FROM (
-            SELECT [name], [type]
-            FROM pragma_table_list
-            WHERE [schema] = db.[name]
-              AND [name] NOT LIKE 'sqlite_%'
-            ORDER BY [name]
-          ) t
+          SELECT json_group_array(json(obj) ORDER BY name)
+          FROM objects
+          WHERE db_name = db.[name] AND type = 'table'
+        ),
+        'views', (
+          SELECT json_group_array(json(obj) ORDER BY name)
+          FROM objects
+          WHERE db_name = db.[name] AND type = 'view'
+        ),
+        'virtual', (
+          SELECT json_group_array(json(obj) ORDER BY name)
+          FROM objects
+          WHERE db_name = db.[name] AND type = 'virtual'
+        ),
+        'shadow', (
+          SELECT json_group_array(json(obj) ORDER BY name)
+          FROM objects
+          WHERE db_name = db.[name] AND type = 'shadow'
         )
       )
     )
     FROM pragma_database_list db
   )
-) AS [schema]
+) AS [schema];
 		`
 
 	var schema string
