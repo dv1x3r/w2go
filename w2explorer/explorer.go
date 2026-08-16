@@ -1,4 +1,4 @@
-package w2widget
+package w2explorer
 
 import (
 	"context"

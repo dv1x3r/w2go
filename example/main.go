@@ -13,8 +13,8 @@ import (
 
 	"github.com/dv1x3r/w2go/w2"
 	"github.com/dv1x3r/w2go/w2db"
+	"github.com/dv1x3r/w2go/w2explorer"
 	"github.com/dv1x3r/w2go/w2lib"
-	"github.com/dv1x3r/w2go/w2widget"
 
 	"github.com/huandu/go-sqlbuilder"
 	_ "modernc.org/sqlite"
@@ -115,8 +115,8 @@ func main() {
 	v1.HandleFunc("GET /status/grid/records", getStatusGridRecords)
 	v1.HandleFunc("POST /status/grid/reorder", postStatusGridReorder)
 
-	v1.HandleFunc("GET /sql", w2widget.SQLiteSchemaHTTPHandler(db))
-	v1.HandleFunc("POST /sql", w2widget.SQLExecHTTPHandler(db))
+	v1.HandleFunc("GET /sql", w2explorer.SQLiteSchemaHTTPHandler(db))
+	v1.HandleFunc("POST /sql", w2explorer.SQLExecHTTPHandler(db))
 
 	router.Handle("/api/v1/", protect(cors(http.StripPrefix("/api/v1", v1))))
 

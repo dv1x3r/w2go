@@ -21,7 +21,7 @@ Handles request parsing, response serialization, SQL query building, and databas
   - [Parsing requests and writing responses](#parsing-requests-and-writing-responses)
   - [w2sql SQL builder integration](#w2sql-sql-builder-integration)
   - [w2db database helpers](#w2db-database-helpers)
-  - [w2widget built-in widgets](#w2widget-built-in-widgets)
+  - [w2explorer built-in SQL Explorer widget](#w2explorer-built-in-sql-explorer-widget)
   - [w2file file uploads](#w2file-file-uploads)
   - [w2sort array reordering](#w2sort-array-reordering)
 - [Example](#example)
@@ -35,15 +35,15 @@ go get github.com/dv1x3r/w2go
 
 ## Packages
 
-| Package    | Description                                                                                 |
-| ---------- | ------------------------------------------------------------------------------------------- |
-| `w2`       | Core types, request parsers, and response writers                                           |
-| `w2sql`    | Translates w2ui requests into SQL (filters, sorters, limits, updates) using `go-sqlbuilder` |
-| `w2db`     | High-level CRUD helpers that execute queries against a `*sql.DB` or `*sql.Tx`               |
-| `w2widget` | Pre-built HTTP handlers for common UI widgets (SQL explorer)                                |
-| `w2file`   | Multipart file upload parsing helpers                                                       |
-| `w2sort`   | In-memory slice reordering for drag-and-drop support                                        |
-| `w2lib`    | Embedded w2ui JS/CSS assets served via `embed.FS`                                           |
+| Package      | Description                                                                                 |
+| ------------ | ------------------------------------------------------------------------------------------- |
+| `w2`         | Core types, request parsers, and response writers                                           |
+| `w2sql`      | Translates w2ui requests into SQL (filters, sorters, limits, updates) using `go-sqlbuilder` |
+| `w2db`       | High-level CRUD helpers that execute queries against a `*sql.DB` or `*sql.Tx`               |
+| `w2explorer` | Pre-built HTTP handler for SQL Explorer widget                                              |
+| `w2file`     | Multipart file upload parsing helpers                                                       |
+| `w2sort`     | In-memory slice reordering for drag-and-drop support                                        |
+| `w2lib`      | Embedded w2ui JS/CSS assets served via `embed.FS`                                           |
 
 ## Usage
 
@@ -274,9 +274,9 @@ err := w2db.WithinTransactionContext(ctx, db, func(ctx context.Context, tx *sql.
 })
 ```
 
-### w2widget built-in widgets
+### w2explorer built-in SQL Explorer widget
 
-`w2widget` provides ready-to-use HTTP handlers for common UI widgets.
+`w2explorer` provides ready-to-use HTTP handlers for SQL Explorer widget.
 
 **SQL Explorer**
 
@@ -285,8 +285,8 @@ A browser-based SQL query tool with a schema sidebar, query editor, and result g
 Register the two backend endpoints:
 
 ```go
-v1.HandleFunc("GET /sql",  w2widget.SQLiteSchemaHTTPHandler(db))
-v1.HandleFunc("POST /sql", w2widget.SQLExecHTTPHandler(db))
+v1.HandleFunc("GET /sql",  w2explorer.SQLiteSchemaHTTPHandler(db))
+v1.HandleFunc("POST /sql", w2explorer.SQLExecHTTPHandler(db))
 ```
 
 Mount the frontend widget from `w2ui.widgets.js`:
@@ -312,8 +312,8 @@ Features:
 If you prefer to handle the HTTP layer yourself, use the lower-level functions directly:
 
 ```go
-res, err := w2widget.SQLExecQuery(ctx, db, query)
-schema, err := w2widget.SQLiteSelectSchema(ctx, db)
+res, err := w2explorer.SQLExecQuery(ctx, db, query)
+schema, err := w2explorer.SQLiteSelectSchema(ctx, db)
 ```
 
 ### w2file file uploads
