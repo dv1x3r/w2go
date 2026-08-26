@@ -11,20 +11,40 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
+// SelectOptions configures Select and SelectContext.
 type SelectOptions[T any] struct {
-	Build  func(sb *sqlbuilder.SelectBuilder)
-	Scan   func(rows *sql.Rows, record *T) error
+	// Query is the raw SQL statement executed as is. It is required when Build is nil.
+	Query string
+
+	// Args lists the placeholder values bound to Query.
+	Args []any
+
+	// Build builds the SELECT query with go-sqlbuilder.
+	//
+	// It is required when Query is empty, and replaces Query and Args when non-nil.
+	Build func(sb *sqlbuilder.SelectBuilder)
+
+	// Scan copies the current data row into record.
+	Scan func(rows *sql.Rows, record *T) error
+
+	// Flavor overrides the package default SQL dialect when non-zero.
+	//
+	// It only applies to Build, raw Query placeholders are left untouched.
 	Flavor sqlbuilder.Flavor
+
+	// Logger overrides the package default SQL logger when non-nil.
 	Logger *slog.Logger
 }
 
+// Select runs a SELECT query using context.Background and returns all scanned records.
 func Select[T any](db QueryExecer, opts SelectOptions[T]) ([]T, error) {
 	return SelectContext[T](context.Background(), db, opts)
 }
 
+// SelectContext runs a SELECT query and returns all scanned records.
 func SelectContext[T any](ctx context.Context, db QueryExecer, opts SelectOptions[T]) ([]T, error) {
-	if opts.Build == nil {
-		return nil, errors.New("opts.Build is required")
+	if opts.Query == "" && opts.Build == nil {
+		return nil, errors.New("opts.Query or opts.Build is required")
 	}
 
 	if opts.Scan == nil {
@@ -41,9 +61,12 @@ func SelectContext[T any](ctx context.Context, db QueryExecer, opts SelectOption
 		logger = defaultLogger
 	}
 
-	builder := sqlbuilder.NewSelectBuilder()
-	opts.Build(builder)
-	query, args := builder.BuildWithFlavor(flavor)
+	query, args := opts.Query, opts.Args
+	if opts.Build != nil {
+		builder := sqlbuilder.NewSelectBuilder()
+		opts.Build(builder)
+		query, args = builder.BuildWithFlavor(flavor)
+	}
 
 	begin := time.Now()
 	rows, err := db.QueryContext(ctx, query, args...)
@@ -73,22 +96,44 @@ func SelectContext[T any](ctx context.Context, db QueryExecer, opts SelectOption
 	return records, nil
 }
 
+// SelectRowOptions configures SelectRow and SelectRowContext.
 type SelectRowOptions[T any] struct {
-	Build  func(sb *sqlbuilder.SelectBuilder)
-	Scan   func(row *sql.Row, record *T) error
+	// Query is the raw SQL statement executed as is. It is required when Build is nil.
+	Query string
+
+	// Args lists the placeholder values bound to Query.
+	Args []any
+
+	// Build builds the SELECT query with go-sqlbuilder.
+	//
+	// It is required when Query is empty, and replaces Query and Args when non-nil.
+	Build func(sb *sqlbuilder.SelectBuilder)
+
+	// Scan copies the data row into record.
+	Scan func(row *sql.Row, record *T) error
+
+	// Flavor overrides the package default SQL dialect when non-zero.
+	//
+	// It only applies to Build, raw Query placeholders are left untouched.
 	Flavor sqlbuilder.Flavor
+
+	// Logger overrides the package default SQL logger when non-nil.
 	Logger *slog.Logger
 }
 
+// SelectRow runs a SELECT query using context.Background and returns the first
+// record, reporting whether a row was found.
 func SelectRow[T any](db QueryExecer, opts SelectRowOptions[T]) (T, bool, error) {
 	return SelectRowContext[T](context.Background(), db, opts)
 }
 
+// SelectRowContext runs a SELECT query and returns the first record, reporting
+// whether a row was found. Missing rows are not an error.
 func SelectRowContext[T any](ctx context.Context, db QueryExecer, opts SelectRowOptions[T]) (T, bool, error) {
 	var record T
 
-	if opts.Build == nil {
-		return record, false, errors.New("opts.Build is required")
+	if opts.Query == "" && opts.Build == nil {
+		return record, false, errors.New("opts.Query or opts.Build is required")
 	}
 
 	if opts.Scan == nil {
@@ -105,9 +150,12 @@ func SelectRowContext[T any](ctx context.Context, db QueryExecer, opts SelectRow
 		logger = defaultLogger
 	}
 
-	builder := sqlbuilder.NewSelectBuilder()
-	opts.Build(builder)
-	query, args := builder.BuildWithFlavor(flavor)
+	query, args := opts.Query, opts.Args
+	if opts.Build != nil {
+		builder := sqlbuilder.NewSelectBuilder()
+		opts.Build(builder)
+		query, args = builder.BuildWithFlavor(flavor)
+	}
 
 	begin := time.Now()
 	row := db.QueryRowContext(ctx, query, args...)
