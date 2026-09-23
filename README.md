@@ -6,8 +6,18 @@ Handles request parsing, response serialization, SQL query building, and databas
 
 <table>
   <tr>
-    <td width="50%"><img src="./example/screenshots/w2grid-light.png" alt="Todo grid example in light theme" /></td>
-    <td width="50%"><img src="./example/screenshots/w2grid-dark.png" alt="Todo grid example in dark theme" /></td>
+    <td width="50%">
+      <img
+        src="./example/screenshots/w2grid-light.png"
+        alt="Todo grid example in light theme"
+      />
+    </td>
+    <td width="50%">
+      <img
+        src="./example/screenshots/w2grid-dark.png"
+        alt="Todo grid example in dark theme"
+      />
+    </td>
   </tr>
   <tr>
     <td align="center"><em>Todo grid in light theme</em></td>
@@ -189,8 +199,8 @@ affected, err := w2db.SaveGrid(tx, req, w2db.SaveGridOptions[Todo]{
         return w2db.UpdateOptions{
             Update:  "todo",
             Values: map[string]any{
-                "description": req.Record.Description.NotNull(),
-                "quantity":    req.Record.Quantity,
+                "description": change.Description.NotNull(),
+                "quantity":    change.Quantity,
             },
             Where: map[string]any{"id": req.RecID},
         }

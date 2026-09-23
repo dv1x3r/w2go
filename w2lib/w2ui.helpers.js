@@ -1,4 +1,4 @@
-import { w2ui, w2tooltip, w2utils } from './w2ui.es6.min.js'
+import { w2ui, w2tooltip, w2utils, query } from './w2ui.es6.min.js'
 
 const darkThemeStorageKey = 'w2ui-theme'
 const darkThemeChangeEvent = 'w2ui:dark-theme-change'
@@ -311,6 +311,96 @@ export async function setFormRecordFromGridSelection(event, form) {
     form.recid = id
     form.record = record
     form.refresh()
+  }
+}
+
+export class TabManager {
+  constructor(tabs) {
+    this.tabs = tabs
+  }
+
+  GetTabs() {
+    return this.tabs
+  }
+
+  OpenTab(id, name, closable, fn, ...args) {
+    if (this.tabs.lock) {
+      return
+    }
+
+    if (!this.tabs.get(id)) {
+      const safeName = w2utils.encodeTags(name)
+      this.tabs.add({
+        id: id,
+        text: safeName.length > 32 ? safeName.slice(0, 32) + '...' : safeName,
+        closable: closable,
+        component: fn(...args),
+      })
+      this.tabs.refresh()
+    }
+
+    this.tabs.click(id)
+  }
+
+  CloseTab(fn) {
+    const found = this.tabs.tabs.filter(fn)
+    if (found.length) {
+      this.tabs.clickClose(found[0].id)
+    }
+  }
+
+  RenameTab(name, fn) {
+    const found = this.tabs.tabs.filter(fn)
+    if (found.length) {
+      const safeName = w2utils.encodeTags(name)
+      found[0].text = safeName.length > 32 ? safeName.slice(0, 32) + '...' : safeName
+      this.tabs.refresh()
+    }
+  }
+
+  OnClick(event) {
+    const [layout, panel] = event.owner.name.split('_')
+    const selector = `#layout_${layout}_panel_${panel} > .w2ui-panel-content`
+
+    const tabID = event.detail.tab.id
+    const tabEl = query(`#${tabID}`)
+
+    query(`${selector} > div`).hide()
+
+    if (tabEl.length) {
+      tabEl.show()
+    } else {
+      query(selector).append(`<div id="${tabID}" style="height: 100%;"></div>`)
+      event.detail.tab.component.render(`#${tabID}`)
+    }
+  }
+
+  OnClose(event) {
+    if (event.owner.lock) {
+      event.preventDefault()
+      return
+    }
+
+    event.owner.lock = true
+    event.onComplete = () => {
+      event.owner.lock = false
+    }
+
+    const closedTabID = event.target
+    const closedIndex = event.owner.tabs.findIndex(tab => tab.id == closedTabID)
+    const nextTab = event.owner.tabs.at(closedIndex + 1)
+    const prevTab = event.owner.tabs.at(closedIndex - 1)
+
+    query(`#${closedTabID}`).remove()
+    event.detail.tab.component.destroy()
+
+    if (closedTabID != event.owner.active) {
+      return
+    } else if (nextTab && nextTab.id != closedTabID) {
+      event.owner.click(nextTab.id)
+    } else if (prevTab && prevTab.id != closedTabID) {
+      event.owner.click(prevTab.id)
+    }
   }
 }
 
