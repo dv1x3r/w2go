@@ -323,7 +323,8 @@ export class TabManager {
     return this.tabs
   }
 
-  OpenTab(id, name, closable, fn, ...args) {
+  OpenTab(opts = {}) {
+    const {id, name, closable, createWidget} = opts
     if (this.tabs.lock) {
       return
     }
@@ -334,7 +335,7 @@ export class TabManager {
         id: id,
         text: safeName.length > 32 ? safeName.slice(0, 32) + '...' : safeName,
         closable: closable,
-        component: fn(...args),
+        component: createWidget(),
       })
       this.tabs.refresh()
     }
