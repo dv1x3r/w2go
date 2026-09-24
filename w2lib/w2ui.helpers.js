@@ -324,45 +324,51 @@ export class TabManager {
   }
 
   OpenTab(opts = {}) {
-    const {id, name, closable, createWidget} = opts
+    const { id, name, closable = true, createWidget } = opts
+
     if (this.tabs.lock) {
-      return
+      return null
     }
 
-    if (!this.tabs.get(id)) {
-      const safeName = w2utils.encodeTags(name)
+    let tab = this.tabs.get(id)
+    if (!tab) {
+      if (typeof createWidget !== 'function') {
+        return null
+      }
+
       this.tabs.add({
         id: id,
-        text: safeName.length > 32 ? safeName.slice(0, 32) + '...' : safeName,
+        text: this.#text(name),
         closable: closable,
-        component: createWidget(),
+        component: createWidget(id),
       })
+
       this.tabs.refresh()
+      tab = this.tabs.get(id)
     }
 
     this.tabs.click(id)
+    return tab
   }
 
-  CloseTab(fn) {
-    const found = this.tabs.tabs.filter(fn)
-    if (found.length) {
-      this.tabs.clickClose(found[0].id)
+  CloseTab(id) {
+    if (this.tabs.get(id)) {
+      this.tabs.clickClose(id)
     }
   }
 
-  RenameTab(name, fn) {
-    const found = this.tabs.tabs.filter(fn)
-    if (found.length) {
-      const safeName = w2utils.encodeTags(name)
-      found[0].text = safeName.length > 32 ? safeName.slice(0, 32) + '...' : safeName
-      this.tabs.refresh()
+  RenameTab(id, name) {
+    const tab = this.tabs.get(id)
+    if (!tab) {
+      return
     }
+
+    tab.text = this.#text(name)
+    this.tabs.refresh()
   }
 
   OnClick(event) {
-    const [layout, panel] = event.owner.name.split('_')
-    const selector = `#layout_${layout}_panel_${panel} > .w2ui-panel-content`
-
+    const selector = this.#panelSelector()
     const tabID = event.detail.tab.id
     const tabEl = query(`#${tabID}`)
 
@@ -387,13 +393,14 @@ export class TabManager {
       event.owner.lock = false
     }
 
+    // onClose runs before the tab leaves the list
     const closedTabID = event.target
     const closedIndex = event.owner.tabs.findIndex(tab => tab.id == closedTabID)
     const nextTab = event.owner.tabs.at(closedIndex + 1)
     const prevTab = event.owner.tabs.at(closedIndex - 1)
 
     query(`#${closedTabID}`).remove()
-    event.detail.tab.component.destroy()
+    event.detail.tab.component?.destroy?.()
 
     if (closedTabID != event.owner.active) {
       return
@@ -402,6 +409,17 @@ export class TabManager {
     } else if (prevTab && prevTab.id != closedTabID) {
       event.owner.click(prevTab.id)
     }
+  }
+
+  #panelSelector() {
+    const name = this.tabs.name.replace(/_tabs$/, '')
+    const cut = name.lastIndexOf('_')
+    return `#layout_${name.slice(0, cut)}_panel_${name.slice(cut + 1)} > .w2ui-panel-content`
+  }
+
+  #text(name) {
+    const safe = w2utils.encodeTags(name ?? '')
+    return safe.length > 32 ? safe.slice(0, 32) + '...' : safe
   }
 }
 

@@ -94,13 +94,17 @@ export function openLocalePopup() {
 export function createSqlExplorerLayout(opts = {}) {
   const { url, darkTheme = 'dracula', initialQuery = '' } = opts
 
+  const uid = `sql-explorer-${Date.now()}`
+  const searchID = `${uid}-search`
+  const editorID = `${uid}-editor`
+
   let abortController = null
   let isRunning = false
   let editor = null
   let stopWatchingTheme = null
 
   const grid = new w2grid({
-    name: 'sqlExplorerGrid-' + Date.now(),
+    name: `${uid}-grid`,
     selectType: 'cell',
     recordHeight: 28,
     show: {
@@ -114,9 +118,9 @@ export function createSqlExplorerLayout(opts = {}) {
   })
 
   const sidebar = new w2sidebar({
-    name: 'sqlExplorerSidebar-' + Date.now(),
+    name: `${uid}-sidebar`,
     levelPadding: 8,
-    topHTML: '<div style="margin-top:2px;padding:3px 5px;height:36px;"><input id="sql-explorer-search" class="w2ui-input" style="width:100%;" placeholder="Search..."></div>',
+    topHTML: `<div style="margin-top:2px;padding:3px 5px;height:36px;"><input id="${searchID}" class="w2ui-input" style="width:100%;" placeholder="Search..."></div>`,
     onContextMenu: function(event) {
       const isTableNode = event.object?.query != null
       this.menu = isTableNode ? [{
@@ -137,7 +141,7 @@ export function createSqlExplorerLayout(opts = {}) {
     onRender: async function(event) {
       await event.complete
       const search = helpers.registerSidebarSearch(sidebar)
-      const el = document.getElementById('sql-explorer-search')
+      const el = document.getElementById(searchID)
       el.addEventListener('keyup', e => search(e.target.value))
     }
   })
@@ -278,7 +282,7 @@ export function createSqlExplorerLayout(opts = {}) {
   }
 
   const editorLayout = new w2layout({
-    name: 'sqlEditorLayout-' + Date.now(),
+    name: `${uid}-editor-layout`,
     panels: [
       {
         type: 'left',
@@ -333,15 +337,12 @@ export function createSqlExplorerLayout(opts = {}) {
             },
           ],
         },
-        html: `<style>.CodeMirror-hints{ z-index: 9999 !important; }</style><div id="sql-explorer-editor" style="height:100%;"></div>`,
+        html: `<style>.CodeMirror-hints{ z-index: 9999 !important; }</style><div id="${editorID}" style="height:100%;"></div>`,
       },
     ],
     onRender: async function(event) {
       await event.complete
-      CodeMirror.Vim.defineEx('write', 'w', async () => {
-        await executeQuery()
-      })
-      editor = CodeMirror(document.getElementById('sql-explorer-editor'), {
+      editor = CodeMirror(document.getElementById(editorID), {
         lineNumbers: true,
         keyMap: isVimModeEnabled() ? 'vim' : 'default',
         mode: 'text/x-sql',
@@ -356,7 +357,7 @@ export function createSqlExplorerLayout(opts = {}) {
           },
           'Shift-Alt-Enter': async () => {
             await executeQuery()
-            document.getElementById('sql-explorer-search').value = ''
+            document.getElementById(searchID).value = ''
             const schema = await helpers.w2fetch({ url: url, method: 'GET' })
             setSchemaSidebar(schema)
             setSchemaAutocomplete(schema)
@@ -372,6 +373,7 @@ export function createSqlExplorerLayout(opts = {}) {
           }
         },
       })
+      editor.save = () => executeQuery()
       stopWatchingTheme = helpers.onDarkThemeChange(isDark => {
         editor.setOption('theme', isDark ? darkTheme : 'default')
       })
@@ -383,7 +385,7 @@ export function createSqlExplorerLayout(opts = {}) {
   })
 
   return new w2layout({
-    name: 'sqlExplorerLayout-' + Date.now(),
+    name: `${uid}-layout`,
     panels: [
       {
         type: 'top',
