@@ -120,7 +120,7 @@ export function createSqlExplorerLayout(opts = {}) {
   const sidebar = new w2sidebar({
     name: `${uid}-sidebar`,
     levelPadding: 8,
-    topHTML: `<div style="margin-top:2px;padding:3px 5px;height:36px;"><input id="${searchID}" class="w2ui-input" style="width:100%;" placeholder="Search..."></div>`,
+    topHTML: `<div style="margin-top:2px;padding:3px 5px;height:36px;"><input id="${searchID}" class="w2ui-input" style="width:100%;" placeholder="Search..." autocomplete="off"></div>`,
     onContextMenu: function(event) {
       const isTableNode = event.object?.query != null
       this.menu = isTableNode ? [{

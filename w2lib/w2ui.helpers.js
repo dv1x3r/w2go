@@ -314,6 +314,52 @@ export async function setFormRecordFromGridSelection(event, form) {
   }
 }
 
+export function bindChildGrid(grid, key, child = null) {
+  grid.childBinding = { key: key, child: child }
+  setParentID(grid, 0)
+  grid.toolbar.disable('w2ui-add')
+  return grid
+}
+
+export async function reloadChildGridFromSelection(grid, event) {
+  await event.complete
+  const selection = event.owner.getSelection()
+  await reloadChildGrid(grid, selection.length == 1 ? selection[0] : 0)
+}
+
+export async function reloadChildGrid(grid, parentID) {
+  setParentID(grid, parentID)
+
+  if (parentID) {
+    grid.toolbar.enable('w2ui-add')
+    await grid.reload()
+  } else {
+    grid.toolbar.disable('w2ui-add')
+    grid.clear()
+  }
+
+  const { child } = grid.childBinding
+  if (child) {
+    await reloadChildGrid(child, 0)
+  }
+}
+
+export function parentIDOf(grid) {
+  const { key } = grid.childBinding
+  return key.search
+    ? grid.searchData.find(x => x.field == key.search)?.value ?? 0
+    : grid.routeData[key.route]
+}
+
+function setParentID(grid, parentID) {
+  const { key } = grid.childBinding
+  if (key.search) {
+    grid.searchData = [{ field: key.search, operator: 'is', value: parentID }]
+  } else {
+    grid.routeData[key.route] = parentID
+  }
+}
+
 export class TabManager {
   constructor(tabs) {
     this.tabs = tabs
